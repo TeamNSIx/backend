@@ -5,7 +5,6 @@
       <excludeFolder url="file://$MODULE_DIR$/.venv/bin" />
       <excludeFolder url="file://$MODULE_DIR$/.venv/lib" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.14" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
