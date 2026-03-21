@@ -15,5 +15,4 @@
 
 ## Инструкция по запуску проекта
 
-
-uvicorn src.app.main:app --reload
+uv run uvicorn src.app.main:app --reload
