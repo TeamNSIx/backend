@@ -1,12 +1,11 @@
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
-
-from .enums import SourceType
 
 
 class Source(SQLModel, table=True):
@@ -17,6 +16,11 @@ class Source(SQLModel, table=True):
     url: str
 
     title: Optional[str] = None
+
+    class SourceType(str, Enum):
+        WEBSITE = 'website'
+        DOCUMENT = 'document'
+        API = 'api'
 
     source_type: SourceType
 

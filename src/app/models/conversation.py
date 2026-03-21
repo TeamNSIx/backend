@@ -16,4 +16,4 @@ class Conversation(SQLModel, table=True):
 
     started_at: datetime | None
 
-    status: bool = True
+    is_finished: bool = Field(default=True)
