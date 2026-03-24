@@ -8,6 +8,12 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 
 
+class SourceType(str, Enum):
+    WEBSITE = 'website'
+    DOCUMENT = 'document'
+    API = 'api'
+
+
 class Source(SQLModel, table=True):
     __tablename__ = 'sources'
 
@@ -16,11 +22,6 @@ class Source(SQLModel, table=True):
     url: str
 
     title: Optional[str] = None
-
-    class SourceType(str, Enum):
-        WEBSITE = 'website'
-        DOCUMENT = 'document'
-        API = 'api'
 
     source_type: SourceType
 
