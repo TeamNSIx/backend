@@ -8,17 +8,18 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 
 
+class MessageSender(str, Enum):
+    USER = 'user'
+    BOT = 'bot'
+    SYSTEM = 'system'
+
+
 class Message(SQLModel, table=True):
     __tablename__ = 'messages'
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
 
     conversation_id: UUID = Field(foreign_key='conversations.id')
-
-    class MessageSender(str, Enum):
-        USER = 'user'
-        BOT = 'bot'
-        SYSTEM = 'system'
 
     sender: MessageSender
 
