@@ -10,7 +10,6 @@ from sqlmodel import Field, SQLModel
 
 class MessageSender(str, Enum):
     USER = 'user'
-    BOT = 'bot'
     SYSTEM = 'system'
 
 
