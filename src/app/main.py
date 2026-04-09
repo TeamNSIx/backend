@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from pydantic import BaseModel
 
 from src.app.db.database import create_db_and_tables
 
@@ -13,9 +12,3 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: bool | None = None
