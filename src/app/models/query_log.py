@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+from typing import Optional
+>>>>>>> b48911e (Feature/database setup (#9))
 from uuid import UUID
 
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
+<<<<<<< HEAD
 from sqlmodel import Field, Relationship, SQLModel
 
 from src.app.models.base_model import BaseModel
@@ -36,3 +41,16 @@ class QueryLogUpdate(SQLModel):
 
 class QueryLogPublic(QueryLogBase, BaseModel):
     pass
+=======
+from sqlmodel import Field
+
+from app.models.base_model import BaseModel
+
+
+class QueryLog(BaseModel, table=True):
+    __tablename__ = 'query_logs'
+
+    user_id: UUID = Field(foreign_key='users.id')
+    query_text: str
+    search_results: Optional[dict] = Field(sa_column=Column(JSONB))
+>>>>>>> b48911e (Feature/database setup (#9))

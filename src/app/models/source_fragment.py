@@ -1,4 +1,5 @@
 from datetime import datetime
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -39,3 +40,21 @@ class SourceFragmentUpdate(SQLModel):
 
 class SourceFragmentPublic(SourceFragmentBase, BaseModel):
     pass
+=======
+from typing import Optional
+from uuid import UUID
+
+from sqlmodel import Field
+
+from app.models.base_model import BaseModel
+
+
+class SourceFragment(BaseModel, table=True):
+    __tablename__ = 'source_fragments'
+
+    source_id: UUID = Field(foreign_key='sources.id')
+    content: str
+    chunk_index: Optional[int] = None
+    valid_from: Optional[datetime] = None
+    valid_to: Optional[datetime] = None
+>>>>>>> b48911e (Feature/database setup (#9))

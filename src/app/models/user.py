@@ -1,4 +1,5 @@
 from enum import Enum
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -8,6 +9,13 @@ from src.app.models.base_model import BaseModel
 if TYPE_CHECKING:
     from src.app.models.conversation import Conversation
     from src.app.models.query_log import QueryLog
+=======
+from typing import Optional
+
+from sqlmodel import Field
+
+from app.models.base_model import BaseModel
+>>>>>>> b48911e (Feature/database setup (#9))
 
 
 class UserRole(str, Enum):
@@ -16,6 +24,7 @@ class UserRole(str, Enum):
     MODERATOR = 'moderator'
 
 
+<<<<<<< HEAD
 class UserBase(SQLModel):
     email: str | None = Field(default=None, index=True)
     role: UserRole = Field(default=UserRole.USER)
@@ -45,3 +54,13 @@ class UserUpdate(SQLModel):
 
 class UserPublic(UserBase, BaseModel):
     pass
+=======
+class User(BaseModel, table=True):
+    __tablename__ = 'users'
+
+    email: Optional[str] = Field(default=None, index=True)
+    role: UserRole = Field(default=UserRole.USER)
+    full_name: Optional[str] = None
+    study_group: Optional[str] = None
+    faculty: Optional[str] = None
+>>>>>>> b48911e (Feature/database setup (#9))

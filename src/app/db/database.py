@@ -13,6 +13,15 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+<<<<<<< HEAD
 async def get_session() -> AsyncGenerator[AsyncSession]:
     async with AsyncSessionLocal() as session:
+=======
+def create_db_and_tables():
+    SQLModel.message_metadata.create_all(engine)
+
+
+def get_session():
+    with Session(engine) as session:
+>>>>>>> b48911e (Feature/database setup (#9))
         yield session

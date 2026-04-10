@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+from typing import Optional
+>>>>>>> b48911e (Feature/database setup (#9))
 from uuid import UUID
 
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
+<<<<<<< HEAD
 from sqlmodel import Field, Relationship, SQLModel
 
 from src.app.models.base_model import BaseModel
@@ -41,3 +46,19 @@ class ResponseLogUpdate(SQLModel):
 
 class ResponseLogPublic(ResponseLogBase, BaseModel):
     pass
+=======
+from sqlmodel import Field
+
+from app.models.base_model import BaseModel
+
+
+class ResponseLog(BaseModel, table=True):
+    __tablename__ = 'response_logs'
+
+    message_id: UUID = Field(foreign_key='messages.id')
+    query_log_id: UUID = Field(foreign_key='query_logs.id')
+    response_text: str
+    used_fragments: Optional[dict] = Field(sa_column=Column(JSONB))
+    response_time_ms: Optional[int] = None
+    user_helpful: Optional[bool] = None
+>>>>>>> b48911e (Feature/database setup (#9))
