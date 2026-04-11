@@ -1,6 +1,10 @@
+import os
+
+from dotenv import load_dotenv
 from sqlmodel import Session, SQLModel, create_engine
 
-DATABASE_URL = 'postgresql://danis@localhost:5432/chatbot_db'
+load_dotenv()
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 engine = create_engine(DATABASE_URL)
 
