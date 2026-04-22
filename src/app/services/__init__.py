@@ -1,4 +1,5 @@
 from src.app.services.conversation_service import ConversationService
+<<<<<<< HEAD
 from src.app.services.embedding_service import EmbeddingService
 from src.app.services.query_log_service import QueryLogService
 from src.app.services.response_log_service import ResponseLogService
@@ -15,3 +16,8 @@ __all__ = [
     'QueryLogService',
     'ResponseLogService',
 ]
+=======
+from src.app.services.user_service import UserService
+
+__all__ = ['UserService', 'ConversationService']
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))

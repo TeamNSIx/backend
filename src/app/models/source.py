@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 <<<<<<< HEAD
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Column
@@ -13,13 +14,23 @@ if TYPE_CHECKING:
     from src.app.models.source_fragment import SourceFragment
 =======
 from typing import Optional
+=======
+from typing import TYPE_CHECKING
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlmodel import Field
+from sqlmodel import Field, Relationship, SQLModel
 
+<<<<<<< HEAD
 from app.models.base_model import BaseModel
 >>>>>>> b48911e (Feature/database setup (#9))
+=======
+from src.app.models.base_model import BaseModel, BasePublic
+
+if TYPE_CHECKING:
+    from src.app.models.source_fragment import SourceFragment
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
 
 class SourceType(str, Enum):
@@ -29,6 +40,9 @@ class SourceType(str, Enum):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 class SourceBase(SQLModel):
     url: str
     title: str | None = None
@@ -39,6 +53,7 @@ class SourceBase(SQLModel):
 
 
 class Source(SourceBase, BaseModel, table=True):
+<<<<<<< HEAD
     __tablename__ = 'sources'
 
     fragments: list['SourceFragment'] = Relationship(back_populates='source')
@@ -70,3 +85,25 @@ class Source(BaseModel, table=True):
     last_crawled_at: Optional[datetime] = None
     is_active: bool = True
 >>>>>>> b48911e (Feature/database setup (#9))
+=======
+    __tablename__ = 'sources'
+
+    fragments: list['SourceFragment'] = Relationship(back_populates='source')
+
+
+class SourceCreate(SourceBase):
+    pass
+
+
+class SourceUpdate(SQLModel):
+    url: str | None = None
+    title: str | None = None
+    source_type: SourceType | None = None
+    crawl_config: dict | None = None
+    last_crawled_at: datetime | None = None
+    is_active: bool | None = None
+
+
+class SourcePublic(SourceBase, BasePublic):
+    pass
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))

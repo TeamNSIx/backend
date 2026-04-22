@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from src.app.repositories.embedding_repository import EmbeddingRepository
 from src.app.repositories.conversation_repository import ConversationRepository
 from src.app.repositories.query_log_repository import QueryLogRepository
@@ -15,3 +16,9 @@ __all__ = [
     'QueryLogRepository',
     'ResponseLogRepository',
 ]
+=======
+from src.app.repositories.conversation_repository import ConversationRepository
+from src.app.repositories.user_repository import UserRepository
+
+__all__ = ['UserRepository', 'ConversationRepository']
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))

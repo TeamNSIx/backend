@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.db.database import get_session
 from src.app.repositories.conversation_repository import ConversationRepository
+<<<<<<< HEAD
 from src.app.repositories.embedding_repository import EmbeddingRepository
 from src.app.repositories.query_log_repository import QueryLogRepository
 from src.app.repositories.response_log_repository import ResponseLogRepository
@@ -17,6 +18,10 @@ from src.app.services.query_log_service import QueryLogService
 from src.app.services.response_log_service import ResponseLogService
 from src.app.services.source_fragment_service import SourceFragmentService
 from src.app.services.source_service import SourceService
+=======
+from src.app.repositories.user_repository import UserRepository
+from src.app.services.conversation_service import ConversationService
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 from src.app.services.user_service import UserService
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
@@ -30,6 +35,7 @@ def get_conversation_repository(session: SessionDep) -> ConversationRepository:
     return ConversationRepository(session)
 
 
+<<<<<<< HEAD
 def get_source_repository(session: SessionDep) -> SourceRepository:
     return SourceRepository(session)
 
@@ -50,6 +56,8 @@ def get_response_log_repository(session: SessionDep) -> ResponseLogRepository:
     return ResponseLogRepository(session)
 
 
+=======
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 def get_user_service(
     user_repository: Annotated[UserRepository, Depends(get_user_repository)],
 ) -> UserService:
@@ -64,6 +72,7 @@ def get_conversation_service(
     return ConversationService(conversation_repository)
 
 
+<<<<<<< HEAD
 def get_source_service(
     source_repository: Annotated[SourceRepository, Depends(get_source_repository)],
 ) -> SourceService:
@@ -98,10 +107,13 @@ def get_response_log_service(
     return ResponseLogService(response_log_repository)
 
 
+=======
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 ConversationServiceDep = Annotated[
     ConversationService, Depends(get_conversation_service)
 ]
+<<<<<<< HEAD
 SourceServiceDep = Annotated[SourceService, Depends(get_source_service)]
 SourceFragmentServiceDep = Annotated[
     SourceFragmentService, Depends(get_source_fragment_service)
@@ -109,3 +121,5 @@ SourceFragmentServiceDep = Annotated[
 EmbeddingServiceDep = Annotated[EmbeddingService, Depends(get_embedding_service)]
 QueryLogServiceDep = Annotated[QueryLogService, Depends(get_query_log_service)]
 ResponseLogServiceDep = Annotated[ResponseLogService, Depends(get_response_log_service)]
+=======
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,18 +12,26 @@ class DatabaseSettings(BaseSettings):
     password: str = 'postgres'
     port: int = 5432
     name: str = 'kfu_chatbot'
+=======
+from pydantic_settings import BaseSettings, SettingsConfigDict
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
 
 class Settings(BaseSettings):
     app_name: str = 'KFU Student Adaptation Chatbot'
     debug: bool = False
+<<<<<<< HEAD
     db: DatabaseSettings = DatabaseSettings()
+=======
+    database_url: str = 'postgresql+asyncpg://postgres:postgres@localhost:5432/kfu_chatbot'
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
     model_config = SettingsConfigDict(
         env_file='.env',
         env_file_encoding='utf-8',
         case_sensitive=False,
         extra='ignore',
+<<<<<<< HEAD
         env_nested_delimiter='__',
     )
 
@@ -43,3 +52,9 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+=======
+    )
+
+
+settings = Settings()
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))

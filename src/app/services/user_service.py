@@ -9,7 +9,11 @@ class UserService:
         self.repository = repository
 
     async def list_users(self) -> list[UserPublic]:
+<<<<<<< HEAD
         users = await self.repository.get_all()
+=======
+        users = await self.repository.list_all()
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
         return [UserPublic.model_validate(user) for user in users]
 
     async def get_user(self, user_id: UUID) -> UserPublic | None:

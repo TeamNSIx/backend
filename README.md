@@ -27,19 +27,27 @@ uv run uvicorn src.app.main:app --reload
 |---|---|---|---|
 | `APP_NAME` | `str` | Имя FastAPI приложения | `KFU Student Adaptation Chatbot` |
 | `DEBUG` | `bool` | Режим отладки FastAPI/SQLAlchemy (`true`/`false`) | `false` |
+<<<<<<< HEAD
 | `DB__SCHEMA` | `str` | Драйвер БД для SQLAlchemy | `postgresql+asyncpg` |
 | `DB__HOST` | `str` | Хост PostgreSQL | `localhost` |
 | `DB__USER` | `str` | Пользователь PostgreSQL | `YOUR_DB_USER` |
 | `DB__PASSWORD` | `str` | Пароль пользователя PostgreSQL | `YOUR_DB_PASSWORD` |
 | `DB__PORT` | `int` | Порт PostgreSQL | `5432` |
 | `DB__NAME` | `str` | Имя базы данных PostgreSQL | `YOUR_DB_NAME` |
+=======
+| `DATABASE_URL` | `str` | Строка подключения к PostgreSQL (асинхронный драйвер `asyncpg`) | `postgresql+asyncpg://YOUR_DB_USER:YOUR_DB_PASSWORD@localhost:5432/YOUR_DB_NAME` |
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
 ## Подключение PostgreSQL
 
 Проект использует асинхронное подключение к БД через `postgresql+asyncpg`.
 
 1. Убедитесь, что локальный PostgreSQL запущен.
+<<<<<<< HEAD
 2. Создайте БД `kfu_chatbot` (или укажите свою в `DB__NAME`).
+=======
+2. Создайте БД `kfu_chatbot` (или укажите свою в `DATABASE_URL`).
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 3. Проверьте пользователя/пароль в `.env`.
 4. Для работы с `embedding` убедитесь, что в PostgreSQL установлено расширение `pgvector`.
 5. Примените миграции:

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from datetime import datetime
 from enum import Enum
 from typing import Generic, TypeAlias, TypeVar
@@ -10,6 +11,15 @@ from sqlmodel import select
 ModelT = TypeVar('ModelT', bound=BaseModel)
 ScalarFilterValue: TypeAlias = str | int | bool | float | UUID | datetime | Enum | None
 UpdateValue: TypeAlias = ScalarFilterValue | dict | list
+=======
+from typing import Generic, TypeVar
+from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import SQLModel, select
+
+ModelT = TypeVar('ModelT', bound=SQLModel)
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
 
 class BaseRepository(Generic[ModelT]):
@@ -22,6 +32,7 @@ class BaseRepository(Generic[ModelT]):
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
+<<<<<<< HEAD
     async def get_all(self, **filters: ScalarFilterValue) -> list[ModelT]:
         statement = select(self.model)
 
@@ -32,6 +43,10 @@ class BaseRepository(Generic[ModelT]):
             statement = statement.where(getattr(self.model, field_name) == value)
 
         result = await self.session.execute(statement)
+=======
+    async def list_all(self) -> list[ModelT]:
+        result = await self.session.execute(select(self.model))
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
         return list(result.scalars().all())
 
     async def add(self, entity: ModelT) -> ModelT:
@@ -39,6 +54,7 @@ class BaseRepository(Generic[ModelT]):
         await self.session.commit()
         await self.session.refresh(entity)
         return entity
+<<<<<<< HEAD
 
     async def update_fields(
         self,
@@ -58,3 +74,5 @@ class BaseRepository(Generic[ModelT]):
         await self.session.commit()
         await self.session.refresh(entity)
         return entity
+=======
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))

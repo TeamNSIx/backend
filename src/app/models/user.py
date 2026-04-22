@@ -1,5 +1,6 @@
 from enum import Enum
 <<<<<<< HEAD
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -11,11 +12,22 @@ if TYPE_CHECKING:
     from src.app.models.query_log import QueryLog
 =======
 from typing import Optional
+=======
+from typing import TYPE_CHECKING
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
-from sqlmodel import Field
+from sqlmodel import Field, Relationship, SQLModel
 
+<<<<<<< HEAD
 from app.models.base_model import BaseModel
 >>>>>>> b48911e (Feature/database setup (#9))
+=======
+from src.app.models.base_model import BaseModel, BasePublic
+
+if TYPE_CHECKING:
+    from src.app.models.conversation import Conversation
+    from src.app.models.query_log import QueryLog
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 
 
 class UserRole(str, Enum):
@@ -25,6 +37,9 @@ class UserRole(str, Enum):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
 class UserBase(SQLModel):
     email: str | None = Field(default=None, index=True)
     role: UserRole = Field(default=UserRole.USER)
@@ -34,6 +49,7 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, BaseModel, table=True):
+<<<<<<< HEAD
     __tablename__ = 'users'
 
     conversations: list['Conversation'] = Relationship(back_populates='user')
@@ -64,3 +80,25 @@ class User(BaseModel, table=True):
     study_group: Optional[str] = None
     faculty: Optional[str] = None
 >>>>>>> b48911e (Feature/database setup (#9))
+=======
+    __tablename__ = 'users'
+
+    conversations: list['Conversation'] = Relationship(back_populates='user')
+    query_logs: list['QueryLog'] = Relationship(back_populates='user')
+
+
+class UserCreate(UserBase):
+    pass
+
+
+class UserUpdate(SQLModel):
+    email: str | None = None
+    role: UserRole | None = None
+    full_name: str | None = None
+    study_group: str | None = None
+    faculty: str | None = None
+
+
+class UserPublic(UserBase, BasePublic):
+    pass
+>>>>>>> 8712bd2 (Feature/database&migrations (#11))
