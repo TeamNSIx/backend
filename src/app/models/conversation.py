@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class ConversationBase(SQLModel):
     user_id: UUID = Field(foreign_key='users.id')
-    title: str | None = None
+    title: Optional[str] = None
     is_finished: bool = Field(default=True)
 
 

@@ -3,6 +3,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
+from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlmodel import SQLModel
 
@@ -23,7 +24,18 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-config.set_main_option('sqlalchemy.url', settings.database_url)
+def form_db_url() -> str:
+    return URL.create(
+        drivername=settings.db_schema,
+        username=settings.db_user,
+        password=settings.db_password,
+        host=settings.db_host,
+        port=settings.db_port,
+        database=settings.db_name,
+    ).render_as_string(hide_password=False)
+
+
+config.set_main_option('sqlalchemy.url', form_db_url())
 target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
