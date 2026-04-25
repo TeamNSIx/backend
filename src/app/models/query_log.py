@@ -5,7 +5,7 @@ from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.response_log import ResponseLog
@@ -34,5 +34,5 @@ class QueryLogUpdate(SQLModel):
     search_results: dict | None = None
 
 
-class QueryLogPublic(QueryLogBase, BasePublic):
+class QueryLogPublic(QueryLogBase, BaseModel):
     pass

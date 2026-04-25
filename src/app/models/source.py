@@ -6,7 +6,7 @@ from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.source_fragment import SourceFragment
@@ -46,5 +46,5 @@ class SourceUpdate(SQLModel):
     is_active: bool | None = None
 
 
-class SourcePublic(SourceBase, BasePublic):
+class SourcePublic(SourceBase, BaseModel):
     pass
