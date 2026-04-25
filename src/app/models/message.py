@@ -6,7 +6,7 @@ from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.conversation import Conversation
@@ -41,5 +41,5 @@ class MessageUpdate(SQLModel):
     message_metadata: dict | None = None
 
 
-class MessagePublic(MessageBase, BasePublic):
+class MessagePublic(MessageBase, BaseModel):
     pass

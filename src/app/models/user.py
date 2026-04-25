@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.conversation import Conversation
@@ -43,5 +43,5 @@ class UserUpdate(SQLModel):
     faculty: str | None = None
 
 
-class UserPublic(UserBase, BasePublic):
+class UserPublic(UserBase, BaseModel):
     pass

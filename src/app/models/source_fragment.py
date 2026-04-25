@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.embedding import Embedding
@@ -37,5 +37,5 @@ class SourceFragmentUpdate(SQLModel):
     valid_to: datetime | None = None
 
 
-class SourceFragmentPublic(SourceFragmentBase, BasePublic):
+class SourceFragmentPublic(SourceFragmentBase, BaseModel):
     pass

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.conversation import Conversation
@@ -30,5 +30,5 @@ class FeedbackUpdate(SQLModel):
     comment: str | None = None
 
 
-class FeedbackPublic(FeedbackBase, BasePublic):
+class FeedbackPublic(FeedbackBase, BaseModel):
     pass

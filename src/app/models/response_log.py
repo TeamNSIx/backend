@@ -5,7 +5,7 @@ from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.message import Message
@@ -39,5 +39,5 @@ class ResponseLogUpdate(SQLModel):
     user_helpful: bool | None = None
 
 
-class ResponseLogPublic(ResponseLogBase, BasePublic):
+class ResponseLogPublic(ResponseLogBase, BaseModel):
     pass
