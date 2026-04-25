@@ -14,10 +14,3 @@ class BaseModel(SQLModel, table=False):
         default_factory=datetime.now,
         sa_column_kwargs={'server_default': func.now(), 'nullable': False},
     )
-
-
-class BasePublic(SQLModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    created_at: datetime

@@ -27,7 +27,7 @@ from app.models.base_model import BaseModel
 =======
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.app.models.base_model import BaseModel, BasePublic
+from src.app.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from src.app.models.source_fragment import SourceFragment
@@ -87,6 +87,6 @@ class EmbeddingUpdate(SQLModel):
     model_name: str | None = None
 
 
-class EmbeddingPublic(EmbeddingBase, BasePublic):
+class EmbeddingPublic(EmbeddingBase, BaseModel):
     pass
 >>>>>>> 8712bd2 (Feature/database&migrations (#11))
