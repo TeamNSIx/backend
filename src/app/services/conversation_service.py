@@ -15,7 +15,7 @@ class ConversationService:
 
     async def list_conversations(self, user_id: UUID | None = None) -> list[ConversationPublic]:
         if user_id is None:
-            conversations = await self.repository.list_all()
+            conversations = await self.repository.get_all()
         else:
             conversations = await self.repository.list_by_user(user_id)
         return [ConversationPublic.model_validate(item) for item in conversations]

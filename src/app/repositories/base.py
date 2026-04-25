@@ -1,10 +1,11 @@
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import SQLModel, select
+from src.app.models.base_model import BaseModel
+from sqlmodel import select
 
-ModelT = TypeVar('ModelT', bound=SQLModel)
+ModelT = TypeVar('ModelT', bound=BaseModel)
 
 
 class BaseRepository(Generic[ModelT]):
@@ -17,12 +18,39 @@ class BaseRepository(Generic[ModelT]):
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def list_all(self) -> list[ModelT]:
-        result = await self.session.execute(select(self.model))
+    async def get_all(self, **filters: Any) -> list[ModelT]:
+        statement = select(self.model)
+
+        for field_name, value in filters.items():
+            if not hasattr(self.model, field_name):
+                msg = f"Unknown filter field '{field_name}' for model {self.model.__name__}"
+                raise ValueError(msg)
+            statement = statement.where(getattr(self.model, field_name) == value)
+
+        result = await self.session.execute(statement)
         return list(result.scalars().all())
 
     async def add(self, entity: ModelT) -> ModelT:
         self.session.add(entity)
+        await self.session.commit()
+        await self.session.refresh(entity)
+        return entity
+
+    async def update_fields(
+        self,
+        entity_id: UUID,
+        updates: dict[str, Any],
+    ) -> ModelT | None:
+        entity = await self.get_by_id(entity_id)
+        if entity is None:
+            return None
+
+        for field_name, value in updates.items():
+            if not hasattr(self.model, field_name):
+                msg = f"Unknown update field '{field_name}' for model {self.model.__name__}"
+                raise ValueError(msg)
+            setattr(entity, field_name, value)
+
         await self.session.commit()
         await self.session.refresh(entity)
         return entity
