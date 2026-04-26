@@ -16,3 +16,56 @@
 ## Инструкция по запуску проекта
 
 uv run uvicorn src.app.main:app --reload
+
+## Переменные окружения
+
+Перед запуском создайте локальный файл `.env` на основе шаблона:
+
+`cp .env.example .env`
+
+| Название переменной | Тип | Описание | Значение по умолчанию |
+|---|---|---|---|
+| `APP_NAME` | `str` | Имя FastAPI приложения | `KFU Student Adaptation Chatbot` |
+| `DEBUG` | `bool` | Режим отладки FastAPI/SQLAlchemy (`true`/`false`) | `false` |
+| `DB__SCHEMA` | `str` | Драйвер БД для SQLAlchemy | `postgresql+asyncpg` |
+| `DB__HOST` | `str` | Хост PostgreSQL | `localhost` |
+| `DB__USER` | `str` | Пользователь PostgreSQL | `YOUR_DB_USER` |
+| `DB__PASSWORD` | `str` | Пароль пользователя PostgreSQL | `YOUR_DB_PASSWORD` |
+| `DB__PORT` | `int` | Порт PostgreSQL | `5432` |
+| `DB__NAME` | `str` | Имя базы данных PostgreSQL | `YOUR_DB_NAME` |
+
+## Подключение PostgreSQL
+
+Проект использует асинхронное подключение к БД через `postgresql+asyncpg`.
+
+1. Убедитесь, что локальный PostgreSQL запущен.
+2. Создайте БД `kfu_chatbot` (или укажите свою в `DB__NAME`).
+3. Проверьте пользователя/пароль в `.env`.
+4. Для работы с `embedding` убедитесь, что в PostgreSQL установлено расширение `pgvector`.
+5. Примените миграции:
+
+`uv run alembic upgrade head`
+
+6. Запустите приложение:
+
+`uv run uvicorn src.app.main:app --reload`
+
+## Миграции Alembic
+
+Структура БД управляется только через Alembic. Приложение не создаёт таблицы автоматически на старте.
+
+Создать новую миграцию по изменениям моделей:
+
+`uv run alembic revision --autogenerate -m "migration message"`
+
+Применить все миграции:
+
+`uv run alembic upgrade head`
+
+Откатить последнюю миграцию:
+
+`uv run alembic downgrade -1`
+
+Показать текущую ревизию в БД:
+
+`uv run alembic current`
