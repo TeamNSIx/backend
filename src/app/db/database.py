@@ -5,12 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from src.app import models  # noqa: F401
 from src.app.core import settings
 
-
-def form_db_url() -> str:
-    return settings.form_db_url()
-
-
-engine = create_async_engine(form_db_url(), echo=settings.debug)
+engine = create_async_engine(settings.form_db_url(), echo=settings.debug)
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,

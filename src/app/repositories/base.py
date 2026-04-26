@@ -1,4 +1,6 @@
-from typing import Any, Generic, TypeVar
+from datetime import datetime
+from enum import Enum
+from typing import Generic, TypeAlias, TypeVar
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +8,8 @@ from src.app.models.base_model import BaseModel
 from sqlmodel import select
 
 ModelT = TypeVar('ModelT', bound=BaseModel)
+ScalarFilterValue: TypeAlias = str | int | bool | float | UUID | datetime | Enum | None
+UpdateValue: TypeAlias = ScalarFilterValue | dict | list
 
 
 class BaseRepository(Generic[ModelT]):
@@ -18,7 +22,7 @@ class BaseRepository(Generic[ModelT]):
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def get_all(self, **filters: Any) -> list[ModelT]:
+    async def get_all(self, **filters: ScalarFilterValue) -> list[ModelT]:
         statement = select(self.model)
 
         for field_name, value in filters.items():
@@ -39,7 +43,7 @@ class BaseRepository(Generic[ModelT]):
     async def update_fields(
         self,
         entity_id: UUID,
-        updates: dict[str, Any],
+        updates: dict[str, UpdateValue],
     ) -> ModelT | None:
         entity = await self.get_by_id(entity_id)
         if entity is None:
