@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import EmailStr, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -13,10 +14,26 @@ class DatabaseSettings(BaseSettings):
     name: str = 'kfu_chatbot'
 
 
+class AuthSettings(BaseSettings):
+    secret: SecretStr = SecretStr('change-this-secret-at-least-32-chars')
+    algorithm: str = 'HS256'
+    access_token_lifetime_seconds: int = 300
+    refresh_token_lifetime_seconds: int = 3600
+
+
+class RBACSettings(BaseSettings):
+    admin_email: EmailStr = 'admin@example.com'
+    admin_password: SecretStr = SecretStr('admin-change-me')
+    admin_role_name: str = 'admin'
+    public_role_name: str = 'public'
+
+
 class Settings(BaseSettings):
     app_name: str = 'KFU Student Adaptation Chatbot'
     debug: bool = False
     db: DatabaseSettings = DatabaseSettings()
+    auth: AuthSettings = AuthSettings()
+    rbac: RBACSettings = RBACSettings()
 
     model_config = SettingsConfigDict(
         env_file='.env',

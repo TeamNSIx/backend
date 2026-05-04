@@ -40,6 +40,12 @@ class BaseRepository(Generic[ModelT]):
         await self.session.refresh(entity)
         return entity
 
+    async def save(self, entity: ModelT) -> ModelT:
+        self.session.add(entity)
+        await self.session.commit()
+        await self.session.refresh(entity)
+        return entity
+
     async def update_fields(
         self,
         entity_id: UUID,

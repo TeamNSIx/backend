@@ -7,6 +7,7 @@ from src.app.db.database import get_session
 from src.app.repositories.conversation_repository import ConversationRepository
 from src.app.repositories.embedding_repository import EmbeddingRepository
 from src.app.repositories.query_log_repository import QueryLogRepository
+from src.app.repositories.refresh_session_repository import RefreshSessionRepository
 from src.app.repositories.response_log_repository import ResponseLogRepository
 from src.app.repositories.source_fragment_repository import SourceFragmentRepository
 from src.app.repositories.source_repository import SourceRepository
@@ -14,6 +15,8 @@ from src.app.repositories.user_repository import UserRepository
 from src.app.services.conversation_service import ConversationService
 from src.app.services.embedding_service import EmbeddingService
 from src.app.services.query_log_service import QueryLogService
+from src.app.services.rbac_service import RbacService
+from src.app.services.refresh import RefreshSessionService
 from src.app.services.response_log_service import ResponseLogService
 from src.app.services.source_fragment_service import SourceFragmentService
 from src.app.services.source_service import SourceService
@@ -46,6 +49,10 @@ def get_query_log_repository(session: SessionDep) -> QueryLogRepository:
     return QueryLogRepository(session)
 
 
+def get_refresh_session_repository(session: SessionDep) -> RefreshSessionRepository:
+    return RefreshSessionRepository(session)
+
+
 def get_response_log_repository(session: SessionDep) -> ResponseLogRepository:
     return ResponseLogRepository(session)
 
@@ -54,6 +61,10 @@ def get_user_service(
     user_repository: Annotated[UserRepository, Depends(get_user_repository)],
 ) -> UserService:
     return UserService(user_repository)
+
+
+def get_rbac_service(session: SessionDep) -> RbacService:
+    return RbacService(session)
 
 
 def get_conversation_service(
@@ -79,15 +90,29 @@ def get_source_fragment_service(
 
 
 def get_embedding_service(
-    embedding_repository: Annotated[EmbeddingRepository, Depends(get_embedding_repository)],
+    embedding_repository: Annotated[
+        EmbeddingRepository,
+        Depends(get_embedding_repository),
+    ],
 ) -> EmbeddingService:
     return EmbeddingService(embedding_repository)
 
 
 def get_query_log_service(
-    query_log_repository: Annotated[QueryLogRepository, Depends(get_query_log_repository)],
+    query_log_repository: Annotated[
+        QueryLogRepository,
+        Depends(get_query_log_repository),
+    ],
 ) -> QueryLogService:
     return QueryLogService(query_log_repository)
+
+
+def get_refresh_session_service(
+    refresh_session_repository: Annotated[
+        RefreshSessionRepository, Depends(get_refresh_session_repository)
+    ],
+) -> RefreshSessionService:
+    return RefreshSessionService(refresh_session_repository)
 
 
 def get_response_log_service(
@@ -108,4 +133,8 @@ SourceFragmentServiceDep = Annotated[
 ]
 EmbeddingServiceDep = Annotated[EmbeddingService, Depends(get_embedding_service)]
 QueryLogServiceDep = Annotated[QueryLogService, Depends(get_query_log_service)]
+RefreshSessionServiceDep = Annotated[
+    RefreshSessionService, Depends(get_refresh_session_service)
+]
 ResponseLogServiceDep = Annotated[ResponseLogService, Depends(get_response_log_service)]
+RbacServiceDep = Annotated[RbacService, Depends(get_rbac_service)]

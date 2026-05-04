@@ -33,6 +33,18 @@ uv run uvicorn src.app.main:app --reload
 | `DB__PASSWORD` | `str` | Пароль пользователя PostgreSQL | `YOUR_DB_PASSWORD` |
 | `DB__PORT` | `int` | Порт PostgreSQL | `5432` |
 | `DB__NAME` | `str` | Имя базы данных PostgreSQL | `YOUR_DB_NAME` |
+| `AUTH__SECRET` | `str` | Секретный ключ JWT (минимум 32 символа) | `change-this-secret-at-least-32-chars` |
+| `AUTH__ALGORITHM` | `str` | Алгоритм подписи JWT | `HS256` |
+| `AUTH__ACCESS_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни access-токена в секундах | `300` |
+| `AUTH__REFRESH_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни refresh-токена в секундах | `3600` |
+| `RBAC__ADMIN_EMAIL` | `str` | Email учётной записи администратора (bootstrap) | `admin@example.com` |
+| `RBAC__ADMIN_PASSWORD` | `str` | Пароль администратора при первом создании или если у записи ещё нет пароля | `admin-change-me` |
+| `RBAC__ADMIN_ROLE_NAME` | `str` | Имя роли с полным доступом (`*` scopes) | `admin` |
+| `RBAC__PUBLIC_ROLE_NAME` | `str` | Роль по умолчанию для всех пользователей после регистрации | `public` |
+
+Секретный JWT-ключ можно сгенерировать командой:
+
+`openssl rand -hex 32`
 
 ## Подключение PostgreSQL
 
@@ -52,7 +64,7 @@ uv run uvicorn src.app.main:app --reload
 
 ## Миграции Alembic
 
-Структура БД управляется только через Alembic. Приложение не создаёт таблицы автоматически на старте.
+Структура БД управляется только через Alembic. Приложение не создаёт таблицы автоматически на старте; при запуске выполняется только bootstrap ролей/разрешений и учётной записи администратора (если их ещё нет в БД).
 
 Создать новую миграцию по изменениям моделей:
 
