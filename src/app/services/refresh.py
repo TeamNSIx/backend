@@ -1,4 +1,7 @@
+from typing import Annotated
 from uuid import UUID
+
+from fastapi import Depends
 
 from src.app.models.refresh import RefreshSession, RefreshSessionCreate
 from src.app.repositories.refresh_session_repository import RefreshSessionRepository
@@ -7,7 +10,12 @@ from src.app.repositories.refresh_session_repository import RefreshSessionReposi
 class RefreshSessionService:
     __refresh_session_repository: RefreshSessionRepository
 
-    def __init__(self, refresh_session_repository: RefreshSessionRepository):
+    def __init__(
+        self,
+        refresh_session_repository: Annotated[
+            RefreshSessionRepository, Depends(RefreshSessionRepository)
+        ],
+    ):
         self.__refresh_session_repository = refresh_session_repository
 
     async def get_active_user_session(self, user_id: UUID) -> RefreshSession | None:
@@ -15,12 +23,7 @@ class RefreshSessionService:
         if len(user_sessions) == 0:
             return None
 
-        valid_sessions = list(
-            filter(
-                lambda session: session.is_valid,
-                user_sessions
-            )
-        )
+        valid_sessions = list(filter(lambda session: session.is_valid, user_sessions))
 
         if len(valid_sessions) != 1:
             return None

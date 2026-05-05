@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID, uuid4
 
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from jwt import InvalidTokenError, decode, encode
 
 from src.app.core import settings as config
@@ -22,10 +22,13 @@ class Authenticator:
 
     def __init__(
         self,
-        user_service: UserService,
-        refresh_session_service: RefreshSessionService,
-        rbac_service: RbacService,
-    ):
+        user_service: Annotated[UserService, Depends(UserService)],
+        refresh_session_service: Annotated[
+            RefreshSessionService,
+            Depends(RefreshSessionService),
+        ],
+        rbac_service: Annotated[RbacService, Depends(RbacService)],
+    ) -> None:
         self.__user_service = user_service
         self.__refresh_session_service = refresh_session_service
         self.__rbac_service = rbac_service

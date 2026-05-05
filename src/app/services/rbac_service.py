@@ -1,31 +1,34 @@
 from __future__ import annotations
 
+from typing import Annotated
 from uuid import UUID
 
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from sqlmodel import select
+from fastapi import Depends
 
 from src.app.core import settings
-from src.app.models.rbac_models import Role, UserRoleLink
+from src.app.models.rbac_models import Role
 from src.app.models.user import User
+from src.app.repositories.role_repository import RoleRepository
+from src.app.repositories.user_repository import UserRepository
+from src.app.repositories.user_role_link_repository import UserRoleLinkRepository
 
 
 class RbacService:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+    def __init__(
+        self,
+        role_repository: Annotated[RoleRepository, Depends(RoleRepository)],
+        user_repository: Annotated[UserRepository, Depends(UserRepository)],
+        user_role_link_repository: Annotated[
+            UserRoleLinkRepository,
+            Depends(UserRoleLinkRepository),
+        ],
+    ) -> None:
+        self.role_repository = role_repository
+        self.user_repository = user_repository
+        self.user_role_link_repository = user_role_link_repository
 
     async def load_user_with_roles(self, user_id: UUID) -> User | None:
-        stmt = (
-            select(User)
-            .where(User.id == user_id)
-            .options(
-                selectinload(User.rbac_roles).selectinload(Role.permissions),
-            )
-        )
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return await self.user_repository.get_with_roles(user_id)
 
     def effective_scopes(self, user: User) -> list[str]:
         names = {r.name for r in user.rbac_roles}
@@ -45,9 +48,7 @@ class RbacService:
         return all(scope in effective for scope in required)
 
     async def get_role_by_name(self, name: str) -> Role | None:
-        stmt = select(Role).where(Role.name == name)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return await self.role_repository.get_by_name(name)
 
     async def ensure_user_has_role(self, user_id: UUID, role_name: str) -> None:
         role = await self.get_role_by_name(role_name)
@@ -55,14 +56,9 @@ class RbacService:
             msg = f"Role '{role_name}' does not exist"
             raise RuntimeError(msg)
 
-        stmt = select(UserRoleLink).where(
-            UserRoleLink.user_id == user_id,
-            UserRoleLink.role_id == role.id,
-        )
-        result = await self.session.execute(stmt)
-        if result.scalar_one_or_none() is None:
-            self.session.add(UserRoleLink(user_id=user_id, role_id=role.id))
-            await self.session.commit()
+        link = await self.user_role_link_repository.get_link(user_id, role.id)
+        if link is None:
+            await self.user_role_link_repository.add_link(user_id, role.id)
 
     async def set_user_roles(self, user_id: UUID, role_names: list[str]) -> None:
         roles: list[Role] = []
@@ -73,9 +69,5 @@ class RbacService:
                 raise ValueError(msg)
             roles.append(role)
 
-        await self.session.execute(
-            delete(UserRoleLink).where(UserRoleLink.user_id == user_id),
-        )
-        for role in roles:
-            self.session.add(UserRoleLink(user_id=user_id, role_id=role.id))
-        await self.session.commit()
+        role_ids = [role.id for role in roles]
+        await self.user_role_link_repository.replace_user_roles(user_id, role_ids)

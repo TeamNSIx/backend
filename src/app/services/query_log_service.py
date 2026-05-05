@@ -1,14 +1,27 @@
+from typing import Annotated
 from uuid import UUID
 
-from src.app.models.query_log import QueryLog, QueryLogCreate, QueryLogPublic, QueryLogUpdate
+from fastapi import Depends
+
+from src.app.models.query_log import (
+    QueryLog,
+    QueryLogCreate,
+    QueryLogPublic,
+    QueryLogUpdate,
+)
 from src.app.repositories.query_log_repository import QueryLogRepository
 
 
 class QueryLogService:
-    def __init__(self, repository: QueryLogRepository) -> None:
+    def __init__(
+        self,
+        repository: Annotated[QueryLogRepository, Depends(QueryLogRepository)],
+    ) -> None:
         self.repository = repository
 
-    async def list_query_logs(self, user_id: UUID | None = None) -> list[QueryLogPublic]:
+    async def list_query_logs(
+        self, user_id: UUID | None = None
+    ) -> list[QueryLogPublic]:
         if user_id is None:
             query_logs = await self.repository.get_all()
         else:

@@ -1,4 +1,7 @@
+from typing import Annotated
 from uuid import UUID
+
+from fastapi import Depends
 
 from src.app.models.source_fragment import (
     SourceFragment,
@@ -10,10 +13,17 @@ from src.app.repositories.source_fragment_repository import SourceFragmentReposi
 
 
 class SourceFragmentService:
-    def __init__(self, repository: SourceFragmentRepository) -> None:
+    def __init__(
+        self,
+        repository: Annotated[
+            SourceFragmentRepository, Depends(SourceFragmentRepository)
+        ],
+    ) -> None:
         self.repository = repository
 
-    async def list_fragments(self, source_id: UUID | None = None) -> list[SourceFragmentPublic]:
+    async def list_fragments(
+        self, source_id: UUID | None = None
+    ) -> list[SourceFragmentPublic]:
         if source_id is None:
             fragments = await self.repository.get_all()
         else:
@@ -26,7 +36,9 @@ class SourceFragmentService:
             return None
         return SourceFragmentPublic.model_validate(fragment)
 
-    async def create_fragment(self, payload: SourceFragmentCreate) -> SourceFragmentPublic:
+    async def create_fragment(
+        self, payload: SourceFragmentCreate
+    ) -> SourceFragmentPublic:
         fragment = SourceFragment.model_validate(payload)
         created = await self.repository.add(fragment)
         return SourceFragmentPublic.model_validate(created)

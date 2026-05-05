@@ -12,20 +12,29 @@ from src.app.models.rbac_models import (
     UserRoleLink,
 )
 from src.app.models.user import User
+from src.app.repositories.permission_repository import PermissionRepository
+from src.app.repositories.role_repository import RoleRepository
 from src.utils.hasher import Hasher
 
 
 async def run_bootstrap(session: AsyncSession) -> None:
+    permission_repository = PermissionRepository(session)
+    role_repository = RoleRepository(session)
+
     perm_by_scope: dict[str, Permission] = {}
     for scope in ALL_SCOPES:
         if scope == 'roles:assign':
             subject, action = 'roles', 'assign'
         else:
             subject, action = scope.split(':', maxsplit=1)
-        perm_by_scope[scope] = await _get_or_create_permission(session, subject, action)
+        perm_by_scope[scope] = await _get_or_create_permission(
+            permission_repository,
+            subject,
+            action,
+        )
 
-    admin_role = await _ensure_role(session, settings.rbac.admin_role_name)
-    public_role = await _ensure_role(session, settings.rbac.public_role_name)
+    admin_role = await _ensure_role(role_repository, settings.rbac.admin_role_name)
+    public_role = await _ensure_role(role_repository, settings.rbac.public_role_name)
 
     admin_permissions = list(perm_by_scope.values())
     await _ensure_role_has_permissions(session, admin_role, admin_permissions)
@@ -39,33 +48,28 @@ async def run_bootstrap(session: AsyncSession) -> None:
 
 
 async def _get_or_create_permission(
-    session: AsyncSession,
+    permission_repository: PermissionRepository,
     subject: str,
     action: str,
 ) -> Permission:
-    stmt = select(Permission).where(
-        Permission.subject == subject,
-        Permission.action == action,
-    )
-    result = await session.execute(stmt)
-    existing = result.scalar_one_or_none()
+    existing = await permission_repository.get_by_subject_action(subject, action)
     if existing:
         return existing
+
     perm = Permission(subject=subject, action=action)
-    session.add(perm)
-    await session.flush()
+    permission_repository.session.add(perm)
+    await permission_repository.session.flush()
     return perm
 
 
-async def _ensure_role(session: AsyncSession, name: str) -> Role:
-    stmt = select(Role).where(Role.name == name)
-    result = await session.execute(stmt)
-    existing = result.scalar_one_or_none()
+async def _ensure_role(role_repository: RoleRepository, name: str) -> Role:
+    existing = await role_repository.get_by_name(name)
     if existing:
         return existing
+
     role = Role(name=name)
-    session.add(role)
-    await session.flush()
+    role_repository.session.add(role)
+    await role_repository.session.flush()
     return role
 
 

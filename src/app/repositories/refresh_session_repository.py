@@ -1,13 +1,19 @@
+from typing import Annotated
 from uuid import UUID
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.app.db.database import get_session
 from src.app.models.refresh import RefreshSession
 from src.app.repositories.base import BaseRepository
 
 
 class RefreshSessionRepository(BaseRepository[RefreshSession]):
-    def __init__(self, session: AsyncSession):
+    def __init__(
+        self,
+        session: Annotated[AsyncSession, Depends(get_session)],
+    ):
         super().__init__(session=session, model=RefreshSession)
 
     async def list_by_user(self, user_id: UUID) -> list[RefreshSession]:
