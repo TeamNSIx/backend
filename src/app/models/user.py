@@ -4,10 +4,12 @@ from typing import TYPE_CHECKING
 from sqlmodel import Field, Relationship, SQLModel
 
 from src.app.models.base_model import BaseModel
+from src.app.models.rbac_models import UserRoleLink
 
 if TYPE_CHECKING:
     from src.app.models.conversation import Conversation
     from src.app.models.query_log import QueryLog
+    from src.app.models.rbac_models import Role
 
 
 class UserRole(str, Enum):
@@ -27,8 +29,14 @@ class UserBase(SQLModel):
 class User(UserBase, BaseModel, table=True):
     __tablename__ = 'users'
 
+    password_hash: str | None = None
     conversations: list['Conversation'] = Relationship(back_populates='user')
     query_logs: list['QueryLog'] = Relationship(back_populates='user')
+    rbac_roles: list['Role'] = Relationship(
+        back_populates='users',
+        link_model=UserRoleLink,
+        sa_relationship_kwargs={'lazy': 'selectin'},
+    )
 
 
 class UserCreate(UserBase):

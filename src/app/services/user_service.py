@@ -1,11 +1,18 @@
+from typing import Annotated
 from uuid import UUID
+
+from fastapi import Depends
 
 from src.app.models.user import User, UserCreate, UserPublic, UserUpdate
 from src.app.repositories.user_repository import UserRepository
+from src.utils.hasher import Hasher
 
 
 class UserService:
-    def __init__(self, repository: UserRepository) -> None:
+    def __init__(
+        self,
+        repository: Annotated[UserRepository, Depends(UserRepository)],
+    ) -> None:
         self.repository = repository
 
     async def list_users(self) -> list[UserPublic]:
@@ -23,7 +30,22 @@ class UserService:
         created = await self.repository.add(user)
         return UserPublic.model_validate(created)
 
-    async def update_user(self, user_id: UUID, payload: UserUpdate) -> UserPublic | None:
+    async def create_user_with_password(
+        self,
+        payload: UserCreate,
+        plain_password: str,
+    ) -> UserPublic:
+        user = User.model_validate(payload)
+        user.password_hash = Hasher.get_password_hash(plain_password)
+        created = await self.repository.add(user)
+        return UserPublic.model_validate(created)
+
+    async def get_user_by_email(self, email: str) -> User | None:
+        return await self.repository.get_by_email(email)
+
+    async def update_user(
+        self, user_id: UUID, payload: UserUpdate
+    ) -> UserPublic | None:
         updates = payload.model_dump(exclude_unset=True)
         updated = await self.repository.update_fields(user_id, updates)
         if updated is None:
