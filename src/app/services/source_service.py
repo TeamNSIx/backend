@@ -1,11 +1,17 @@
+from typing import Annotated
 from uuid import UUID
+
+from fastapi import Depends
 
 from src.app.models.source import Source, SourceCreate, SourcePublic, SourceUpdate
 from src.app.repositories.source_repository import SourceRepository
 
 
 class SourceService:
-    def __init__(self, repository: SourceRepository) -> None:
+    def __init__(
+        self,
+        repository: Annotated[SourceRepository, Depends(SourceRepository)],
+    ) -> None:
         self.repository = repository
 
     async def list_sources(self) -> list[SourcePublic]:
@@ -23,7 +29,9 @@ class SourceService:
         created = await self.repository.add(source)
         return SourcePublic.model_validate(created)
 
-    async def update_source(self, source_id: UUID, payload: SourceUpdate) -> SourcePublic | None:
+    async def update_source(
+        self, source_id: UUID, payload: SourceUpdate
+    ) -> SourcePublic | None:
         updates = payload.model_dump(exclude_unset=True)
         updated = await self.repository.update_fields(source_id, updates)
         if updated is None:

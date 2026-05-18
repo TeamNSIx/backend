@@ -1,14 +1,27 @@
+from typing import Annotated
 from uuid import UUID
 
-from src.app.models.embedding import Embedding, EmbeddingCreate, EmbeddingPublic, EmbeddingUpdate
+from fastapi import Depends
+
+from src.app.models.embedding import (
+    Embedding,
+    EmbeddingCreate,
+    EmbeddingPublic,
+    EmbeddingUpdate,
+)
 from src.app.repositories.embedding_repository import EmbeddingRepository
 
 
 class EmbeddingService:
-    def __init__(self, repository: EmbeddingRepository) -> None:
+    def __init__(
+        self,
+        repository: Annotated[EmbeddingRepository, Depends(EmbeddingRepository)],
+    ) -> None:
         self.repository = repository
 
-    async def list_embeddings(self, fragment_id: UUID | None = None) -> list[EmbeddingPublic]:
+    async def list_embeddings(
+        self, fragment_id: UUID | None = None
+    ) -> list[EmbeddingPublic]:
         if fragment_id is None:
             embeddings = await self.repository.get_all()
         else:

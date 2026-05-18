@@ -1,4 +1,7 @@
+from typing import Annotated
 from uuid import UUID
+
+from fastapi import Depends
 
 from src.app.models.response_log import (
     ResponseLog,
@@ -10,7 +13,10 @@ from src.app.repositories.response_log_repository import ResponseLogRepository
 
 
 class ResponseLogService:
-    def __init__(self, repository: ResponseLogRepository) -> None:
+    def __init__(
+        self,
+        repository: Annotated[ResponseLogRepository, Depends(ResponseLogRepository)],
+    ) -> None:
         self.repository = repository
 
     async def list_response_logs(
@@ -24,7 +30,10 @@ class ResponseLogService:
             response_logs = await self.repository.list_by_query_log(query_log_id)
         else:
             response_logs = await self.repository.get_all()
-        return [ResponseLogPublic.model_validate(response_log) for response_log in response_logs]
+        return [
+            ResponseLogPublic.model_validate(response_log)
+            for response_log in response_logs
+        ]
 
     async def get_response_log(self, response_log_id: UUID) -> ResponseLogPublic | None:
         response_log = await self.repository.get_by_id(response_log_id)
@@ -32,7 +41,9 @@ class ResponseLogService:
             return None
         return ResponseLogPublic.model_validate(response_log)
 
-    async def create_response_log(self, payload: ResponseLogCreate) -> ResponseLogPublic:
+    async def create_response_log(
+        self, payload: ResponseLogCreate
+    ) -> ResponseLogPublic:
         response_log = ResponseLog.model_validate(payload)
         created = await self.repository.add(response_log)
         return ResponseLogPublic.model_validate(created)
