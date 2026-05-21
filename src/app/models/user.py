@@ -19,7 +19,7 @@ class UserRole(str, Enum):
 
 
 class UserBase(SQLModel):
-    email: str | None = Field(default=None, index=True)
+    email: str | None = Field(default=None, index=True, unique=True)
     role: UserRole = Field(default=UserRole.USER)
     full_name: str | None = None
     study_group: str | None = None

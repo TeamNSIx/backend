@@ -49,9 +49,7 @@ class Authenticator:
 
     async def __generate_tokens(self, user_id: UUID) -> Optional[AuthTokenData]:
         refresh_svc = self.__refresh_session_service
-        has_active_sessions = await refresh_svc.has_user_active_session(user_id)
-        if has_active_sessions:
-            return None
+        await refresh_svc.invalidate_user_sessions(user_id)
 
         user_with_roles = await self.__rbac_service.load_user_with_roles(user_id)
         scopes = (
@@ -90,7 +88,7 @@ class Authenticator:
                 user_id=user_id,
                 access_token_id=access_token_id,
                 refresh_token_id=refresh_token_id,
-                expires_at=refresh_token_expires_at,
+                expires_at=refresh_token_expires_at.replace(tzinfo=None),
             ),
         )
 
