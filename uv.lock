@@ -135,6 +135,7 @@ dependencies = [
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "greenlet" },
+    { name = "httpx" },
     { name = "pgvector" },
     { name = "pwdlib", extra = ["argon2"] },
     { name = "pydantic-settings" },
@@ -146,7 +147,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
@@ -159,6 +159,7 @@ requires-dist = [
     { name = "email-validator", specifier = ">=2.2.0" },
     { name = "fastapi", specifier = ">=0.135.1" },
     { name = "greenlet", specifier = ">=3.3.2" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "pgvector", specifier = ">=0.4.2" },
     { name = "pwdlib", extras = ["argon2"], specifier = ">=0.3.0" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
@@ -170,7 +171,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "httpx", specifier = ">=0.28.1" },
     { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "ruff", specifier = ">=0.15.4" },

@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.app.db.database import get_session
 from src.app.services.conversation_service import ConversationService
 from src.app.services.embedding_service import EmbeddingService
+from src.app.services.feedback_service import FeedbackService
+from src.app.services.message_service import MessageService
 from src.app.services.query_log_service import QueryLogService
 from src.app.services.rbac_service import RbacService
 from src.app.services.refresh import RefreshSessionService
@@ -24,6 +26,8 @@ SourceFragmentServiceDep = Annotated[
     Depends(SourceFragmentService),
 ]
 EmbeddingServiceDep = Annotated[EmbeddingService, Depends(EmbeddingService)]
+MessageServiceDep = Annotated[MessageService, Depends(MessageService)]
+FeedbackServiceDep = Annotated[FeedbackService, Depends(FeedbackService)]
 QueryLogServiceDep = Annotated[QueryLogService, Depends(QueryLogService)]
 RefreshSessionServiceDep = Annotated[
     RefreshSessionService,

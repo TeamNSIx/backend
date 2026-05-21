@@ -22,7 +22,7 @@ class RefreshSession(RefreshSessionCreate, BaseModel, table=True):
     @computed_field
     @property
     def is_valid(self) -> bool:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         expired = now > self.expires_at
         is_invalid = expired or self.is_invalidated
         return not is_invalid

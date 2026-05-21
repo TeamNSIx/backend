@@ -17,7 +17,7 @@ class DatabaseSettings(BaseSettings):
 class AuthSettings(BaseSettings):
     secret: SecretStr = SecretStr('change-this-secret-at-least-32-chars')
     algorithm: str = 'HS256'
-    access_token_lifetime_seconds: int = 300
+    access_token_lifetime_seconds: int = 3600
     refresh_token_lifetime_seconds: int = 3600
 
 
@@ -28,12 +28,33 @@ class RBACSettings(BaseSettings):
     public_role_name: str = 'public'
 
 
+class LLMSettings(BaseSettings):
+    provider: str = 'gigachat'
+    fallback_answer: str = (
+        'Сообщение сохранено. LLM пока недоступна или не настроена.'
+    )
+
+
+class GigaChatSettings(BaseSettings):
+    auth_key: SecretStr = SecretStr('')
+    scope: str = 'GIGACHAT_API_PERS'
+    model: str = 'GigaChat-2'
+    base_url: str = 'https://gigachat.devices.sberbank.ru/api/v1'
+    oauth_url: str = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth'
+    timeout_seconds: float = 30.0
+    verify_ssl: bool = True
+    temperature: float = 0.2
+    max_tokens: int = 700
+
+
 class Settings(BaseSettings):
     app_name: str = 'KFU Student Adaptation Chatbot'
     debug: bool = False
     db: DatabaseSettings = DatabaseSettings()
     auth: AuthSettings = AuthSettings()
     rbac: RBACSettings = RBACSettings()
+    llm: LLMSettings = LLMSettings()
+    gigachat: GigaChatSettings = GigaChatSettings()
 
     model_config = SettingsConfigDict(
         env_file='.env',
