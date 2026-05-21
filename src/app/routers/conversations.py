@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from pydantic import BaseModel, Field
 
 from src.app.dependencies import (
@@ -72,6 +72,34 @@ def _ensure_conversation_access(
     return conversation
 
 
+async def get_accessible_conversation(
+    conversation_id: UUID,
+    current_user: ConversationDetailAuth,
+    conversation_service: ConversationServiceDep,
+) -> ConversationPublic:
+    conversation = await conversation_service.get_conversation(conversation_id)
+    return _ensure_conversation_access(conversation, current_user)
+
+
+async def get_accessible_conversation_for_update(
+    conversation_id: UUID,
+    current_user: ConversationUpdateAuth,
+    conversation_service: ConversationServiceDep,
+) -> ConversationPublic:
+    conversation = await conversation_service.get_conversation(conversation_id)
+    return _ensure_conversation_access(conversation, current_user)
+
+
+ConversationAccessDep = Annotated[
+    ConversationPublic,
+    Depends(get_accessible_conversation),
+]
+ConversationUpdateAccessDep = Annotated[
+    ConversationPublic,
+    Depends(get_accessible_conversation_for_update),
+]
+
+
 @router.get('/', response_model=list[ConversationPublic])
 async def list_conversations(
     current_user: ConversationListAuth,
@@ -90,13 +118,11 @@ async def list_conversations(
 @router.get('/{conversation_id}/messages', response_model=list[MessagePublic])
 async def list_messages(
     conversation_id: UUID,
-    current_user: ConversationDetailAuth,
-    conversation_service: ConversationServiceDep,
+    conversation: ConversationAccessDep,
     message_service: MessageServiceDep,
 ):
-    conversation = await conversation_service.get_conversation(conversation_id)
-    _ensure_conversation_access(conversation, current_user)
-    return await message_service.list_messages(conversation_id)
+    _ = conversation_id
+    return await message_service.list_messages(conversation.id)
 
 
 @router.post(
@@ -106,15 +132,13 @@ async def list_messages(
 )
 async def create_message(
     conversation_id: UUID,
+    conversation: ConversationUpdateAccessDep,
     payload: ChatMessageCreate,
-    current_user: ConversationUpdateAuth,
-    conversation_service: ConversationServiceDep,
     message_service: MessageServiceDep,
 ):
-    conversation = await conversation_service.get_conversation(conversation_id)
-    _ensure_conversation_access(conversation, current_user)
+    _ = conversation_id
     user_message, bot_message = await message_service.create_chat_pair(
-        conversation_id=conversation_id,
+        conversation_id=conversation.id,
         user_text=payload.content,
     )
     return ChatMessageResponse(
@@ -126,13 +150,11 @@ async def create_message(
 @router.get('/{conversation_id}/feedback', response_model=list[FeedbackPublic])
 async def list_feedback(
     conversation_id: UUID,
-    current_user: ConversationDetailAuth,
-    conversation_service: ConversationServiceDep,
+    conversation: ConversationAccessDep,
     feedback_service: FeedbackServiceDep,
 ):
-    conversation = await conversation_service.get_conversation(conversation_id)
-    _ensure_conversation_access(conversation, current_user)
-    return await feedback_service.list_feedback(conversation_id)
+    _ = conversation_id
+    return await feedback_service.list_feedback(conversation.id)
 
 
 @router.post(
@@ -142,16 +164,14 @@ async def list_feedback(
 )
 async def create_feedback(
     conversation_id: UUID,
+    conversation: ConversationUpdateAccessDep,
     payload: ConversationFeedbackCreate,
-    current_user: ConversationUpdateAuth,
-    conversation_service: ConversationServiceDep,
     feedback_service: FeedbackServiceDep,
 ):
-    conversation = await conversation_service.get_conversation(conversation_id)
-    _ensure_conversation_access(conversation, current_user)
+    _ = conversation_id
     return await feedback_service.create_feedback(
         FeedbackCreate(
-            conversation_id=conversation_id,
+            conversation_id=conversation.id,
             rating=payload.rating,
             comment=payload.comment,
         ),
@@ -161,11 +181,10 @@ async def create_feedback(
 @router.get('/{conversation_id}', response_model=ConversationPublic)
 async def get_conversation(
     conversation_id: UUID,
-    current_user: ConversationDetailAuth,
-    service: ConversationServiceDep,
+    conversation: ConversationAccessDep,
 ):
-    conversation = await service.get_conversation(conversation_id)
-    return _ensure_conversation_access(conversation, current_user)
+    _ = conversation_id
+    return conversation
 
 
 @router.post(
@@ -189,16 +208,15 @@ async def create_conversation(
 @router.patch('/{conversation_id}', response_model=ConversationPublic)
 async def update_conversation(
     conversation_id: UUID,
+    conversation: ConversationUpdateAccessDep,
     payload: ConversationUpdate,
-    current_user: ConversationUpdateAuth,
     service: ConversationServiceDep,
 ):
-    existing = await service.get_conversation(conversation_id)
-    _ensure_conversation_access(existing, current_user)
-    conversation = await service.update_conversation(conversation_id, payload)
-    if conversation is None:
+    _ = conversation_id
+    updated_conversation = await service.update_conversation(conversation.id, payload)
+    if updated_conversation is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Conversation not found',
         )
-    return conversation
+    return updated_conversation
