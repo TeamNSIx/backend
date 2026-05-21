@@ -22,7 +22,7 @@ class MessageBase(SQLModel):
     conversation_id: UUID = Field(foreign_key='conversations.id')
     sender: MessageSender
     content: str
-    message_metadata: dict | None = Field(sa_column=Column(JSONB))
+    message_metadata: dict | None = Field(default=None, sa_column=Column(JSONB))
 
 
 class Message(MessageBase, BaseModel, table=True):

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class FeedbackBase(SQLModel):
     conversation_id: UUID = Field(foreign_key='conversations.id')
-    rating: int | None = None
+    rating: int | None = Field(default=None, ge=1, le=5)
     comment: str | None = None
 
 

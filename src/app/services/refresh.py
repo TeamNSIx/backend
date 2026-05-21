@@ -35,6 +35,13 @@ class RefreshSessionService:
 
         return user_active_session is not None
 
+    async def invalidate_user_sessions(self, user_id: UUID) -> None:
+        user_sessions = await self.__refresh_session_repository.list_by_user(user_id)
+        for session in user_sessions:
+            if session.is_valid:
+                session.is_invalidated = True
+                await self.__refresh_session_repository.save(session)
+
     async def save_session(self, session: RefreshSession) -> RefreshSession:
         return await self.__refresh_session_repository.save(session)
 

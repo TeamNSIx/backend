@@ -35,6 +35,13 @@ async def register(
     user_service: UserServiceDep,
     rbac_service: RbacServiceDep,
 ):
+    existing_user = await user_service.get_user_by_email(payload.email)
+    if existing_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail='User with this email already exists',
+        )
+
     user_payload = UserCreate.model_validate(payload.model_dump(exclude={'password'}))
     user = await user_service.create_user_with_password(
         user_payload,
