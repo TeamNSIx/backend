@@ -35,12 +35,23 @@ uv run uvicorn src.app.main:app --reload
 | `DB__NAME` | `str` | Имя базы данных PostgreSQL | `YOUR_DB_NAME` |
 | `AUTH__SECRET` | `str` | Секретный ключ JWT (минимум 32 символа) | `change-this-secret-at-least-32-chars` |
 | `AUTH__ALGORITHM` | `str` | Алгоритм подписи JWT | `HS256` |
-| `AUTH__ACCESS_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни access-токена в секундах | `300` |
+| `AUTH__ACCESS_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни access-токена в секундах | `3600` |
 | `AUTH__REFRESH_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни refresh-токена в секундах | `3600` |
 | `RBAC__ADMIN_EMAIL` | `str` | Email учётной записи администратора (bootstrap) | `admin@example.com` |
 | `RBAC__ADMIN_PASSWORD` | `str` | Пароль администратора при первом создании или если у записи ещё нет пароля | `admin-change-me` |
 | `RBAC__ADMIN_ROLE_NAME` | `str` | Имя роли с полным доступом (`*` scopes) | `admin` |
 | `RBAC__PUBLIC_ROLE_NAME` | `str` | Роль по умолчанию для всех пользователей после регистрации | `public` |
+| `LLM__PROVIDER` | `str` | Провайдер LLM для генерации ответов | `gigachat` |
+| `LLM__FALLBACK_ANSWER` | `str` | Ответ, который сохраняется при недоступности LLM | `Сообщение сохранено. LLM пока недоступна или не настроена.` |
+| `GIGACHAT__AUTH_KEY` | `str` | Ключ авторизации GigaChat API. Можно указывать с префиксом `Basic ` или без него | пусто |
+| `GIGACHAT__SCOPE` | `str` | Scope для OAuth-запроса GigaChat | `GIGACHAT_API_PERS` |
+| `GIGACHAT__MODEL` | `str` | Модель GigaChat для генерации ответа | `GigaChat-2` |
+| `GIGACHAT__BASE_URL` | `str` | Базовый URL GigaChat API | `https://gigachat.devices.sberbank.ru/api/v1` |
+| `GIGACHAT__OAUTH_URL` | `str` | URL для получения access token GigaChat | `https://ngw.devices.sberbank.ru:9443/api/v2/oauth` |
+| `GIGACHAT__TIMEOUT_SECONDS` | `float` | Таймаут HTTP-запросов к GigaChat в секундах | `30` |
+| `GIGACHAT__VERIFY_SSL` | `bool` | Проверять SSL-сертификат GigaChat (`true`/`false`) | `true` |
+| `GIGACHAT__TEMPERATURE` | `float` | Температура генерации ответа | `0.2` |
+| `GIGACHAT__MAX_TOKENS` | `int` | Максимальное количество токенов в ответе | `700` |
 
 Секретный JWT-ключ можно сгенерировать командой:
 
