@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.db.database import get_session
 from src.app.services.conversation_service import ConversationService
+from src.app.services.email_service import EmailService
 from src.app.services.embedding_service import EmbeddingService
 from src.app.services.feedback_service import FeedbackService
 from src.app.services.message_service import MessageService
@@ -38,3 +39,4 @@ ResponseLogServiceDep = Annotated[
     Depends(ResponseLogService),
 ]
 RbacServiceDep = Annotated[RbacService, Depends(RbacService)]
+EmailServiceDep = Annotated[EmailService, Depends(EmailService)]

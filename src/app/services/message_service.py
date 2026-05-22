@@ -10,6 +10,7 @@ from src.app.models.message import (
     MessageSender,
 )
 from src.app.repositories.message_repository import MessageRepository
+from src.app.schemas.pagination import PaginatedResponse, PaginationParams
 from src.app.services.llm_service import LLMService
 
 
@@ -22,9 +23,19 @@ class MessageService:
         self.repository = repository
         self.llm_service = llm_service
 
-    async def list_messages(self, conversation_id: UUID) -> list[MessagePublic]:
-        messages = await self.repository.list_by_conversation(conversation_id)
-        return [MessagePublic.model_validate(message) for message in messages]
+    async def list_messages(
+        self,
+        conversation_id: UUID,
+        pagination: PaginationParams,
+    ) -> PaginatedResponse[MessagePublic]:
+        total = await self.repository.count_by_conversation(conversation_id)
+        messages = await self.repository.list_by_conversation_page(
+            conversation_id,
+            pagination.offset,
+            pagination.page_size,
+        )
+        items = [MessagePublic.model_validate(message) for message in messages]
+        return PaginatedResponse.build(items, total, pagination)
 
     async def create_message(self, payload: MessageCreate) -> MessagePublic:
         message = Message.model_validate(payload)
@@ -43,13 +54,12 @@ class MessageService:
                 content=user_text,
             ),
         )
-        answer, metadata = await self.llm_service.generate_answer(user_text)
+        bot_text = await self.llm_service.generate_response(user_text)
         bot_message = await self.create_message(
             MessageCreate(
                 conversation_id=conversation_id,
-                sender=MessageSender.SYSTEM,
-                content=answer,
-                message_metadata=metadata,
+                sender=MessageSender.BOT,
+                content=bot_text,
             ),
         )
         return user_message, bot_message

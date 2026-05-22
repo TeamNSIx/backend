@@ -1,4 +1,6 @@
 from src.app.schemas.error import (
+    BadRequestErrorSchema,
+    ConflictErrorSchema,
     ForbiddenErrorSchema,
     InternalServerErrorSchema,
     NotFoundErrorSchema,
@@ -17,3 +19,18 @@ auth_responses = {
 detail_responses = {
     404: {'model': NotFoundErrorSchema},
 }
+
+bad_request_responses = {
+    400: {'model': BadRequestErrorSchema},
+}
+
+conflict_responses = {
+    409: {'model': ConflictErrorSchema},
+}
+
+
+def merge_responses(*parts: dict) -> dict:
+    merged: dict = {}
+    for part in parts:
+        merged.update(part)
+    return merged

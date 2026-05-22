@@ -25,3 +25,22 @@ class MessageRepository(BaseRepository[Message]):
         )
         result = await self.session.execute(statement)
         return list(result.scalars().all())
+
+    async def list_by_conversation_page(
+        self,
+        conversation_id: UUID,
+        offset: int,
+        limit: int,
+    ) -> list[Message]:
+        statement = (
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at, Message.id)
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
+    async def count_by_conversation(self, conversation_id: UUID) -> int:
+        return await self.count(conversation_id=conversation_id)

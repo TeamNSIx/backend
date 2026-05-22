@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Подтверждение аккаунта</title>
+</head>
+<body>
+    <h2>Подтвердите регистрацию</h2>
+    <p>Здравствуйте{% if full_name %}, {{ full_name }}{% endif %}!</p>
+    <p>Для завершения регистрации в {{ app_name }} перейдите по ссылке:</p>
+    <p><a href="{{ confirmation_url }}">Подтвердить аккаунт</a></p>
+    <p>Если вы не регистрировались, просто проигнорируйте это письмо.</p>
+</body>
+</html>
