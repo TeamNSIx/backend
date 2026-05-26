@@ -55,12 +55,11 @@ class UserRolesUpdate(BaseModel):
 
 @router.get('/', response_model=PaginatedResponse[UserPublic], responses=_responses)
 async def list_users(
-    request: Request,
+    request: Request,  # noqa: ARG001
     _: ProfileListAuth,
     service: UserServiceDep,
     pagination: PaginationDep,
 ):
-    _ = request
     return await service.list_users(pagination)
 
 

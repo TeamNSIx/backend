@@ -109,13 +109,12 @@ ConversationUpdateAccessDep = Annotated[
     responses=_responses,
 )
 async def list_conversations(
-    request: Request,
+    request: Request,  # noqa: ARG001
     current_user: ConversationListAuth,
     service: ConversationServiceDep,
     pagination: PaginationDep,
     user_id: OptionalUserIdQuery = None,
 ):
-    _ = request
     if user_id is not None and user_id != current_user.id:
         raise ForbiddenError()
     user_id = current_user.id if user_id is None else user_id
@@ -128,13 +127,12 @@ async def list_conversations(
     responses=_responses,
 )
 async def list_messages(
-    request: Request,
+    request: Request,  # noqa: ARG001
     conversation_id: UUID,
     conversation: ConversationAccessDep,
     message_service: MessageServiceDep,
     pagination: PaginationDep,
 ):
-    _ = request
     _ = conversation_id
     return await message_service.list_messages(conversation.id, pagination)
 
@@ -168,13 +166,12 @@ async def create_message(
     responses=_responses,
 )
 async def list_feedback(
-    request: Request,
+    request: Request,  # noqa: ARG001
     conversation_id: UUID,
     conversation: ConversationAccessDep,
     feedback_service: FeedbackServiceDep,
     pagination: PaginationDep,
 ):
-    _ = request
     _ = conversation_id
     return await feedback_service.list_feedback(conversation.id, pagination)
 
