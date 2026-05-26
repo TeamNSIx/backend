@@ -63,14 +63,13 @@ _change_password_responses = merge_responses(_auth_responses, bad_request_respon
 )
 @limiter.limit(settings.rate_limit.auth)
 async def register(
-    request: Request,
+    request: Request,  # noqa: ARG001
     payload: RegisterData,
     background_tasks: BackgroundTasks,
     user_service: UserServiceDep,
     rbac_service: RbacServiceDep,
     email_service: EmailServiceDep,
 ):
-    _ = request
     existing_user = await user_service.get_user_by_email(payload.email)
     if existing_user is not None:
         raise ConflictError(detail='User with this email already exists')
@@ -106,11 +105,10 @@ async def register(
 )
 @limiter.limit(settings.rate_limit.auth)
 async def confirm_account(
-    request: Request,
+    request: Request,  # noqa: ARG001
     payload: ConfirmAccountData,
     user_service: UserServiceDep,
 ):
-    _ = request
     user_id = EmailTokenService.verify_account_confirmation_token(payload.token)
     await user_service.confirm_account(user_id)
     return SuccessResponse(message='Account confirmed successfully')
@@ -119,12 +117,11 @@ async def confirm_account(
 @router.post('/login', response_model=AuthTokenData, responses=_token_responses)
 @limiter.limit(settings.rate_limit.auth)
 async def login(
-    request: Request,
+    request: Request,  # noqa: ARG001
     response: Response,
     authenticator: AuthenticatorDep,
     form_data: OAuth2FormDep,
 ):
-    _ = request
     token_data = await authenticator.create_token(
         AuthData(username=form_data.username, password=form_data.password),
     )
@@ -196,12 +193,11 @@ async def logout(
 @router.post('/refresh', response_model=AuthTokenData, responses=_token_responses)
 @limiter.limit(settings.rate_limit.auth)
 async def refresh(
-    request: Request,
+    request: Request,  # noqa: ARG001
     response: Response,
     authenticator: AuthenticatorDep,
     refresh_token: RefreshCookieDep = None,
 ):
-    _ = request
     if refresh_token is None:
         raise UnauthorizedError(detail='Refresh token not provided')
 

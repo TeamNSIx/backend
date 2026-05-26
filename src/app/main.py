@@ -1,5 +1,4 @@
 import logging
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,15 +11,10 @@ from src.app.core.rate_limit import limiter
 from src.app.routers import api_router
 from src.utils.logger import setup_logger
 
+log_level = getattr(logging, settings.logging.level.upper(), logging.INFO)
+setup_logger(level=log_level, log_file=settings.logging.log_file)
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    log_level = getattr(logging, settings.logging.level.upper(), logging.INFO)
-    setup_logger(level=log_level, log_file=settings.logging.log_file)
-    yield
-
-
-app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
+app = FastAPI(title=settings.app_name, debug=settings.debug)
 app.state.limiter = limiter
 
 if settings.cors.enabled:

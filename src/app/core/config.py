@@ -1,3 +1,4 @@
+from datetime import timedelta
 from functools import lru_cache
 
 from pydantic import EmailStr, SecretStr
@@ -68,15 +69,15 @@ class EmailSettings(BaseSettings):
     enabled: bool = True
     frontend_base_url: str = 'http://localhost:3000'
     confirmation_path: str = '/confirm'
-    confirmation_token_lifetime_seconds: int = 86_400
+    confirmation_token_lifetime_seconds: int = int(timedelta(days=1).total_seconds())
 
 
 class CORSSettings(BaseSettings):
     enabled: bool = True
     allow_origins: str = 'http://localhost:3000,http://127.0.0.1:3000'
     allow_credentials: bool = True
-    allow_methods: str = '*'
-    allow_headers: str = '*'
+    allow_methods: str = 'GET,POST,PATCH,OPTIONS'
+    allow_headers: str = 'Authorization,Content-Type,Accept'
 
     @property
     def origins_list(self) -> list[str]:
