@@ -2,13 +2,40 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Подтверждение аккаунта</title>
+    <title>Подтверждение регистрации</title>
 </head>
-<body>
-    <h2>Подтвердите регистрацию</h2>
-    <p>Здравствуйте{% if full_name %}, {{ full_name }}{% endif %}!</p>
-    <p>Для завершения регистрации в {{ app_name }} перейдите по ссылке:</p>
-    <p><a href="{{ confirmation_url }}">Подтвердить аккаунт</a></p>
-    <p>Если вы не регистрировались, просто проигнорируйте это письмо.</p>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f4f4; padding: 40px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <tr>
+                        <td style="background-color: #005696; padding: 30px; text-align: center; color: #ffffff;">
+                            <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Чат-бот КФУ</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px; color: #333333; line-height: 1.6; font-size: 16px;">
+                            <h2 style="margin-top: 0; margin-bottom: 16px; font-size: 20px; color: #005696; font-weight: bold;">Подтверждение регистрации</h2>
+                            <p style="margin: 0 0 12px 0;">Здравствуйте!</p>
+                            <p style="margin: 0 0 30px 0;">Вы успешно зарегистрировались в чате КФУ. Чтобы завершить регистрацию и активировать ваш аккаунт, пожалуйста, подтвердите ваш адрес электронной почты.</p>
+
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{{ confirm_url }}" style="background-color: #005696; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 15px;">Подтвердить Email</a>
+                            </div>
+
+                            <p style="margin: 30px 0 0 0; font-size: 14px; color: #64748b;">Если вы не регистрировались на нашем ресурсе, просто проигнорируйте это письмо.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f9f9f9; padding: 20px; text-align: center; color: #999999; font-size: 12px; border-top: 1px solid #eef2f5;">
+                            <p style="margin: 0;">© Казанский (Приволжский) федеральный университет.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
+</html>
 </html>
