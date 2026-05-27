@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated, Optional
 from uuid import UUID, uuid4
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from jwt import InvalidTokenError, decode, encode
 
 from src.app.core import settings as config
@@ -12,6 +12,7 @@ from src.app.schemas.auth import AuthData, AuthTokenData, UserTokenData
 from src.app.services.rbac_service import RbacService
 from src.app.services.refresh import RefreshSessionService
 from src.app.services.user_service import UserService
+from src.utils.error import BadRequestError, ForbiddenError, UnauthorizedError
 from src.utils.hasher import Hasher
 
 
@@ -33,21 +34,25 @@ class Authenticator:
         self.__refresh_session_service = refresh_session_service
         self.__rbac_service = rbac_service
 
-    async def create_token(self, auth_data: AuthData) -> Optional[AuthTokenData]:
+    async def create_token(self, auth_data: AuthData) -> AuthTokenData:
         user = await self.__user_service.get_user_by_email(auth_data.username)
         if user is None:
-            return None
+            raise UnauthorizedError(detail='Invalid credentials')
 
         password_hash = user.password_hash
         if password_hash is None:
-            return None
+            raise UnauthorizedError(detail='Invalid credentials')
+
         password = auth_data.password.get_secret_value()
         if not Hasher.verify_password(password, password_hash):
-            return None
+            raise UnauthorizedError(detail='Invalid credentials')
+
+        if not user.is_verified:
+            raise ForbiddenError(detail='Account is not confirmed')
 
         return await self.__generate_tokens(user.id)
 
-    async def __generate_tokens(self, user_id: UUID) -> Optional[AuthTokenData]:
+    async def __generate_tokens(self, user_id: UUID) -> AuthTokenData:
         refresh_svc = self.__refresh_session_service
         await refresh_svc.invalidate_user_sessions(user_id)
 
@@ -128,10 +133,7 @@ class Authenticator:
     ) -> UserPublic:
         token_data = self.__get_user_token_data(access_token)
         if token_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Unauthorized',
-            )
+            raise UnauthorizedError()
 
         user_id = UUID(token_data.user_id)
         access_token_id = UUID(token_data.token_id)
@@ -139,62 +141,53 @@ class Authenticator:
         refresh_svc = self.__refresh_session_service
         active_session = await refresh_svc.get_active_user_session(user_id)
         if active_session is None or active_session.access_token_id != access_token_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Unauthorized',
-            )
+            raise UnauthorizedError()
 
         user = await self.__rbac_service.load_user_with_roles(user_id)
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Unauthorized',
-            )
+            raise UnauthorizedError()
 
         effective = self.__rbac_service.effective_scopes(user)
         if not self.__rbac_service.scopes_allow(effective, required_scopes):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='Forbidden',
-            )
+            raise ForbiddenError()
 
         return UserPublic.model_validate(user)
 
-    async def logout(self, token: str) -> bool:
+    async def logout(self, token: str) -> None:
         token_data = self.__get_user_token_data(token)
         if token_data is None:
-            return False
+            raise UnauthorizedError(detail='Invalid refresh token')
 
         user_id = UUID(token_data.user_id)
         token_id = UUID(token_data.token_id)
         refresh_svc = self.__refresh_session_service
         user_active_session = await refresh_svc.get_active_user_session(user_id)
         if user_active_session is None:
-            return False
+            raise BadRequestError(detail='Logout failed')
+
         allowed = {
             user_active_session.access_token_id,
             user_active_session.refresh_token_id,
         }
         if token_id not in allowed:
-            return False
+            raise BadRequestError(detail='Logout failed')
 
         user_active_session.is_invalidated = True
         await refresh_svc.save_session(user_active_session)
-        return True
 
-    async def refresh_tokens(self, refresh_token: str) -> Optional[AuthTokenData]:
+    async def refresh_tokens(self, refresh_token: str) -> AuthTokenData:
         token_data = self.__get_user_token_data(refresh_token)
         if token_data is None:
-            return None
+            raise UnauthorizedError(detail='Invalid refresh token')
 
         user_id = UUID(token_data.user_id)
         refresh_token_id = UUID(token_data.token_id)
         refresh_svc = self.__refresh_session_service
         user_active_session = await refresh_svc.get_active_user_session(user_id)
         if user_active_session is None:
-            return None
+            raise UnauthorizedError(detail='Invalid refresh token')
         if user_active_session.refresh_token_id != refresh_token_id:
-            return None
+            raise UnauthorizedError(detail='Invalid refresh token')
 
         user_active_session.is_invalidated = True
         await refresh_svc.save_session(user_active_session)

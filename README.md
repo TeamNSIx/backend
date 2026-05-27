@@ -15,7 +15,17 @@
 
 ## Инструкция по запуску проекта
 
-uv run uvicorn src.app.main:app --reload
+Локальная разработка:
+
+`uv run uvicorn src.app.main:app --reload`
+
+Production (gunicorn + uvicorn workers, слушает `0.0.0.0`):
+
+`uv run gunicorn src.app.main:app -c gunicorn.conf.py`
+
+После миграций выполните bootstrap RBAC (роли, permissions, admin):
+
+`uv run python -m scripts.bootstrap_rbac`
 
 ## Переменные окружения
 
@@ -27,6 +37,8 @@ uv run uvicorn src.app.main:app --reload
 |---|---|---|---|
 | `APP_NAME` | `str` | Имя FastAPI приложения | `KFU Student Adaptation Chatbot` |
 | `DEBUG` | `bool` | Режим отладки FastAPI/SQLAlchemy (`true`/`false`) | `false` |
+| `LOGGING__LEVEL` | `str` | Уровень логирования (`DEBUG`, `INFO`, `WARNING`, …) | `INFO` |
+| `LOGGING__LOG_FILE` | `str` | Путь к файлу логов приложения | `my_log.log` |
 | `DB__SCHEMA` | `str` | Драйвер БД для SQLAlchemy | `postgresql+asyncpg` |
 | `DB__HOST` | `str` | Хост PostgreSQL | `localhost` |
 | `DB__USER` | `str` | Пользователь PostgreSQL | `YOUR_DB_USER` |
@@ -37,6 +49,34 @@ uv run uvicorn src.app.main:app --reload
 | `AUTH__ALGORITHM` | `str` | Алгоритм подписи JWT | `HS256` |
 | `AUTH__ACCESS_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни access-токена в секундах | `3600` |
 | `AUTH__REFRESH_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни refresh-токена в секундах | `3600` |
+| `SMTP__HOST` | `str` | Хост SMTP-сервера | `smtp.example.com` |
+| `SMTP__PORT` | `int` | Порт SMTP | `587` |
+| `SMTP__USERNAME` | `str` | Логин SMTP | пусто |
+| `SMTP__PASSWORD` | `str` | Пароль SMTP | пусто |
+| `SMTP__FROM_EMAIL` | `str` | Email отправителя | `noreply@example.com` |
+| `SMTP__FROM_NAME` | `str` | Имя отправителя в письме | `KFU Chatbot` |
+| `SMTP__STARTTLS` | `bool` | Использовать STARTTLS | `true` |
+| `SMTP__SSL_TLS` | `bool` | Использовать SSL/TLS | `false` |
+| `SMTP__USE_CREDENTIALS` | `bool` | Аутентификация на SMTP | `true` |
+| `EMAIL__ENABLED` | `bool` | Включить отправку email | `true` |
+| `EMAIL__FRONTEND_BASE_URL` | `str` | Базовый URL фронтенда (ссылки в письмах) | `http://localhost:3000` |
+| `EMAIL__CONFIRMATION_PATH` | `str` | Путь страницы подтверждения аккаунта | `/confirm` |
+| `EMAIL__CONFIRMATION_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни токена подтверждения (сек) | `86400` (1 день) |
+| `CORS__ENABLED` | `bool` | Включить CORS middleware | `true` |
+| `CORS__ALLOW_ORIGINS` | `str` | Разрешённые origins через запятую | `http://localhost:3000,http://127.0.0.1:3000` |
+| `CORS__ALLOW_CREDENTIALS` | `bool` | Разрешить cookies в CORS | `true` |
+| `CORS__ALLOW_METHODS` | `str` | Разрешённые HTTP-методы через запятую | `GET,POST,PATCH,OPTIONS` |
+| `CORS__ALLOW_HEADERS` | `str` | Разрешённые заголовки через запятую | `Authorization,Content-Type,Accept` |
+| `RATE_LIMIT__ENABLED` | `bool` | Включить rate limiting (slowapi) | `true` |
+| `RATE_LIMIT__DEFAULT` | `str` | Лимит по умолчанию для API | `60/minute` |
+| `RATE_LIMIT__AUTH` | `str` | Лимит для auth-роутов | `10/minute` |
+| `GUNICORN_BIND` | `str` | Адрес и порт gunicorn | `0.0.0.0:8000` |
+| `GUNICORN_WORKERS` | `int` | Число worker-процессов | `4` |
+| `GUNICORN_TIMEOUT` | `int` | Таймаут worker в секундах | `120` |
+| `GUNICORN_KEEPALIVE` | `int` | Keep-alive в секундах | `5` |
+| `GUNICORN_ACCESS_LOG` | `str` | Путь access-лога (`-` — stdout) | `-` |
+| `GUNICORN_ERROR_LOG` | `str` | Путь error-лога (`-` — stderr) | `-` |
+| `GUNICORN_LOG_LEVEL` | `str` | Уровень логов gunicorn | `info` |
 | `RBAC__ADMIN_EMAIL` | `str` | Email учётной записи администратора (bootstrap) | `admin@example.com` |
 | `RBAC__ADMIN_PASSWORD` | `str` | Пароль администратора при первом создании или если у записи ещё нет пароля | `admin-change-me` |
 | `RBAC__ADMIN_ROLE_NAME` | `str` | Имя роли с полным доступом (`*` scopes) | `admin` |
@@ -69,13 +109,17 @@ uv run uvicorn src.app.main:app --reload
 
 `uv run alembic upgrade head`
 
-6. Запустите приложение:
+6. Выполните bootstrap RBAC:
+
+`uv run python -m scripts.bootstrap_rbac`
+
+7. Запустите приложение:
 
 `uv run uvicorn src.app.main:app --reload`
 
 ## Миграции Alembic
 
-Структура БД управляется только через Alembic. Приложение не создаёт таблицы автоматически на старте; при запуске выполняется только bootstrap ролей/разрешений и учётной записи администратора (если их ещё нет в БД).
+Структура БД управляется только через Alembic. Приложение не создаёт таблицы автоматически на старте. Bootstrap ролей, permissions и учётной записи администратора выполняется отдельным скриптом `scripts/bootstrap_rbac.py`.
 
 Создать новую миграцию по изменениям моделей:
 

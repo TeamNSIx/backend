@@ -1,6 +1,8 @@
 from sqlmodel import SQLModel
 
 from src.utils.error import (
+    BadRequestError,
+    ConflictError,
     ForbiddenError,
     InternalServerError,
     NotFoundError,
@@ -27,3 +29,11 @@ class ForbiddenErrorSchema(ErrorSchema):
 
 class UnauthorizedErrorSchema(ErrorSchema):
     message: str = UnauthorizedError.message
+
+
+class BadRequestErrorSchema(ErrorSchema):
+    message: str = BadRequestError.message
+
+
+class ConflictErrorSchema(ErrorSchema):
+    message: str = ConflictError.message

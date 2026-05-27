@@ -30,6 +30,7 @@ class User(UserBase, BaseModel, table=True):
     __tablename__ = 'users'
 
     password_hash: str | None = None
+    is_verified: bool = Field(default=False)
     conversations: list['Conversation'] = Relationship(back_populates='user')
     query_logs: list['QueryLog'] = Relationship(back_populates='user')
     rbac_roles: list['Role'] = Relationship(
@@ -52,4 +53,4 @@ class UserUpdate(SQLModel):
 
 
 class UserPublic(UserBase, BaseModel):
-    pass
+    is_verified: bool = False

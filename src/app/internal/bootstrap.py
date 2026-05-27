@@ -101,11 +101,15 @@ async def _ensure_admin_user(session: AsyncSession, admin_role: Role) -> None:
         admin_user = User(
             email=admin_email,
             password_hash=Hasher.get_password_hash(plain_password),
+            is_verified=True,
         )
         session.add(admin_user)
         await session.flush()
     elif admin_user.password_hash is None:
         admin_user.password_hash = Hasher.get_password_hash(plain_password)
+
+    if not admin_user.is_verified:
+        admin_user.is_verified = True
 
     stmt_link = select(UserRoleLink).where(
         UserRoleLink.user_id == admin_user.id,

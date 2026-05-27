@@ -1,3 +1,4 @@
+from datetime import timedelta
 from functools import lru_cache
 
 from pydantic import EmailStr, SecretStr
@@ -47,9 +48,80 @@ class GigaChatSettings(BaseSettings):
     max_tokens: int = 700
 
 
+class LoggingSettings(BaseSettings):
+    level: str = 'INFO'
+    log_file: str = 'my_log.log'
+
+
+class SMTPSettings(BaseSettings):
+    host: str = 'smtp.example.com'
+    port: int = 587
+    username: str = ''
+    password: SecretStr = SecretStr('')
+    from_email: EmailStr = 'noreply@example.com'
+    from_name: str = 'KFU Chatbot'
+    starttls: bool = True
+    ssl_tls: bool = False
+    use_credentials: bool = True
+
+
+class EmailSettings(BaseSettings):
+    enabled: bool = True
+    frontend_base_url: str = 'http://localhost:3000'
+    confirmation_path: str = '/confirm'
+    confirmation_token_lifetime_seconds: int = int(timedelta(days=1).total_seconds())
+
+
+class CORSSettings(BaseSettings):
+    enabled: bool = True
+    allow_origins: str = 'http://localhost:3000,http://127.0.0.1:3000'
+    allow_credentials: bool = True
+    allow_methods: str = 'GET,POST,PATCH,OPTIONS'
+    allow_headers: str = 'Authorization,Content-Type,Accept'
+
+    @property
+    def origins_list(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.allow_origins.split(',')
+            if origin.strip()
+        ]
+
+    @property
+    def methods_list(self) -> list[str]:
+        if self.allow_methods.strip() == '*':
+            return ['*']
+        return [
+            method.strip()
+            for method in self.allow_methods.split(',')
+            if method.strip()
+        ]
+
+    @property
+    def headers_list(self) -> list[str]:
+        if self.allow_headers.strip() == '*':
+            return ['*']
+        return [
+            header.strip()
+            for header in self.allow_headers.split(',')
+            if header.strip()
+        ]
+
+
+class RateLimitSettings(BaseSettings):
+    enabled: bool = True
+    default: str = '60/minute'
+    auth: str = '10/minute'
+
+
 class Settings(BaseSettings):
     app_name: str = 'KFU Student Adaptation Chatbot'
     debug: bool = False
+    logging: LoggingSettings = LoggingSettings()
+    smtp: SMTPSettings = SMTPSettings()
+    email: EmailSettings = EmailSettings()
+    cors: CORSSettings = CORSSettings()
+    rate_limit: RateLimitSettings = RateLimitSettings()
     db: DatabaseSettings = DatabaseSettings()
     auth: AuthSettings = AuthSettings()
     rbac: RBACSettings = RBACSettings()
