@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+
+# Python
+.venv
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.ruff_cache
+.mypy_cache
+.pytest_cache
+.coverage
+htmlcov
+
+# Local env and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and OS
+.idea
+.vscode
+.DS_Store
+*.swp
+*.swo
+
+# Docs and dev tooling (not needed in runtime image)
+*.md
+!README.md
+.pre-commit-config.yaml
+.python-version
+
+# Tests
+tests
+
+# Logs
+*.log
+my_log.log
+
+# Docker build context
+Dockerfile*
+docker-compose*.yml
+.dockerignore
