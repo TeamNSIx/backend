@@ -22,7 +22,11 @@ class LLMService:
     ) -> None:
         self.gigachat_client = gigachat_client
 
-    async def generate_answer(self, prompt: str) -> tuple[str, dict]:
+    async def generate_answer(
+        self,
+        prompt: str,
+        system_prompt: str = SYSTEM_PROMPT,
+    ) -> tuple[str, dict]:
         if settings.llm.provider != 'gigachat':
             return settings.llm.fallback_answer, {
                 'provider': settings.llm.provider,
@@ -33,7 +37,7 @@ class LLMService:
         try:
             answer = await self.gigachat_client.generate(
                 prompt=prompt,
-                system_prompt=SYSTEM_PROMPT,
+                system_prompt=system_prompt,
             )
         except Exception as exc:
             logger.warning('LLM generation failed: %s', exc)

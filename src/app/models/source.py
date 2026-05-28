@@ -22,7 +22,7 @@ class SourceBase(SQLModel):
     url: str
     title: str | None = None
     source_type: SourceType
-    crawl_config: dict | None = Field(sa_column=Column(JSONB))
+    crawl_config: dict | None = Field(default=None, sa_column=Column(JSONB))
     last_crawled_at: datetime | None = None
     is_active: bool = True
 

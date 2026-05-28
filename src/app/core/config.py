@@ -46,6 +46,48 @@ class GigaChatSettings(BaseSettings):
     verify_ssl: bool = True
     temperature: float = 0.2
     max_tokens: int = 700
+    rag_top_k: int = 5
+    rag_min_similarity: float = 0.35
+
+
+class EmbeddingsSettings(BaseSettings):
+    provider: str = 'local'
+    model_name: str = 'intfloat/multilingual-e5-small'
+    dimension: int = 384
+    document_prefix: str = 'passage: '
+    query_prefix: str = 'query: '
+    query_instruction: str = ''
+    max_seq_length: int = 512
+    trust_remote_code: bool = False
+
+
+class WebIngestionSettings(BaseSettings):
+    enabled: bool = True
+    fallback_urls: str = ''
+    trusted_domains: str = 'kpfu.ru,itis.kpfu.ru'
+    timeout_seconds: float = 10.0
+    max_pages_per_request: int = 3
+    chunk_size: int = 1200
+    chunk_overlap: int = 200
+    min_similarity: float = 0.55
+    max_context_chunks: int = 3
+    persist_found_context: bool = True
+
+    @property
+    def fallback_urls_list(self) -> list[str]:
+        return [
+            url.strip()
+            for url in self.fallback_urls.split(',')
+            if url.strip()
+        ]
+
+    @property
+    def trusted_domains_list(self) -> list[str]:
+        return [
+            domain.strip().lower()
+            for domain in self.trusted_domains.split(',')
+            if domain.strip()
+        ]
 
 
 class LoggingSettings(BaseSettings):
@@ -127,6 +169,8 @@ class Settings(BaseSettings):
     rbac: RBACSettings = RBACSettings()
     llm: LLMSettings = LLMSettings()
     gigachat: GigaChatSettings = GigaChatSettings()
+    embeddings: EmbeddingsSettings = EmbeddingsSettings()
+    web_ingestion: WebIngestionSettings = WebIngestionSettings()
 
     model_config = SettingsConfigDict(
         env_file='.env',

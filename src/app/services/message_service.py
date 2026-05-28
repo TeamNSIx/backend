@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import BackgroundTasks, Depends
 
 from src.app.models.message import (
     Message,
@@ -11,17 +11,17 @@ from src.app.models.message import (
 )
 from src.app.repositories.message_repository import MessageRepository
 from src.app.schemas.pagination import PaginatedResponse, PaginationParams
-from src.app.services.llm_service import LLMService
+from src.app.services.rag_service import RAGService
 
 
 class MessageService:
     def __init__(
         self,
         repository: Annotated[MessageRepository, Depends(MessageRepository)],
-        llm_service: Annotated[LLMService, Depends(LLMService)],
+        rag_service: Annotated[RAGService, Depends(RAGService)],
     ) -> None:
         self.repository = repository
-        self.llm_service = llm_service
+        self.rag_service = rag_service
 
     async def list_messages(
         self,
@@ -46,6 +46,7 @@ class MessageService:
         self,
         conversation_id: UUID,
         user_text: str,
+        background_tasks: BackgroundTasks | None = None,
     ) -> tuple[MessagePublic, MessagePublic]:
         user_message = await self.create_message(
             MessageCreate(
@@ -54,12 +55,16 @@ class MessageService:
                 content=user_text,
             ),
         )
-        bot_text = await self.llm_service.generate_response(user_text)
+        bot_text, metadata = await self.rag_service.generate_answer(
+            user_text,
+            background_tasks,
+        )
         bot_message = await self.create_message(
             MessageCreate(
                 conversation_id=conversation_id,
-                sender=MessageSender.BOT,
+                sender=MessageSender.SYSTEM,
                 content=bot_text,
+                message_metadata=metadata,
             ),
         )
         return user_message, bot_message
