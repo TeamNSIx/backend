@@ -102,7 +102,7 @@ docker run --rm --env-file .env kfu-chatbot-backend:0.1.0 python -m scripts.boot
 | `migrations` | `lianamolokina/kfu-chatbot-backend:0.1.0` | `alembic upgrade head` |
 | `rbac` | то же | `scripts.bootstrap_rbac` |
 | `api` | то же | Backend API |
-| `nginx` | `nginx:1.27-alpine` | Reverse-proxy, порт **80** |
+| `nginx` | `nginx:1.27-alpine` (`x-front-image`) | Reverse-proxy, порт **80** |
 
 Остановка: `docker compose down`. Удалить данные БД: `docker compose down -v`.
 
@@ -123,11 +123,11 @@ docker run --rm --env-file .env kfu-chatbot-backend:0.1.0 python -m scripts.boot
 | `LOGGING__LEVEL` | `str` | Уровень логирования (`DEBUG`, `INFO`, `WARNING`, …) | `INFO` |
 | `LOGGING__LOG_FILE` | `str` | Путь к файлу логов приложения | `my_log.log` |
 | `DB__SCHEMA` | `str` | Драйвер БД для SQLAlchemy | `postgresql+asyncpg` |
-| `DB__HOST` | `str` | Хост PostgreSQL (`db` в compose, `localhost` при локальном uv) | `db` |
-| `DB__USER` | `str` | Пользователь PostgreSQL | `postgres` |
-| `DB__PASSWORD` | `str` | Пароль пользователя PostgreSQL | `postgres` |
+| `DB__HOST` | `str` | Хост PostgreSQL (`db` в compose, `localhost` при локальном uv) | `localhost` |
+| `DB__USER` | `str` | Пользователь PostgreSQL | `YOUR_DB_USER` |
+| `DB__PASSWORD` | `str` | Пароль пользователя PostgreSQL | `YOUR_DB_PASSWORD` |
 | `DB__PORT` | `int` | Порт PostgreSQL | `5432` |
-| `DB__NAME` | `str` | Имя базы данных PostgreSQL | `kfu_chatbot` |
+| `DB__NAME` | `str` | Имя базы данных PostgreSQL | `YOUR_DB_NAME` |
 | `AUTH__SECRET` | `str` | Секретный ключ JWT (минимум 32 символа) | `change-this-secret-at-least-32-chars` |
 | `AUTH__ALGORITHM` | `str` | Алгоритм подписи JWT | `HS256` |
 | `AUTH__ACCESS_TOKEN_LIFETIME_SECONDS` | `int` | Время жизни access-токена в секундах | `3600` |
