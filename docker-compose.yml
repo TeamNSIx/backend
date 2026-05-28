@@ -3,6 +3,8 @@ x-db-image: &db-image pgvector/pgvector:pg18
 
 x-back-image: &back-image lianamolokina/kfu-chatbot-backend:0.1.0
 
+x-front-image: &front-image nginx:1.27-alpine
+
 x-app-service: &app-service
   image: *back-image
   env_file:
@@ -10,8 +12,6 @@ x-app-service: &app-service
   environment: &app-environment
     DB__HOST: db
     DB__PORT: '5432'
-  networks:
-    - kfu-network
 
 x-api-healthcheck: &api-healthcheck
   test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:8000/openapi.json']
@@ -32,8 +32,6 @@ services:
     volumes:
       # PostgreSQL 18+: том монтируется в /var/lib/postgresql (см. docker-library/postgres)
       - postgres_data:/var/lib/postgresql
-    networks:
-      - kfu-network
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
       interval: 5s
@@ -68,7 +66,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:1.27-alpine
+    image: *front-image
     ports:
       - '80:80'
     volumes:
@@ -77,13 +75,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    networks:
-      - kfu-network
     restart: unless-stopped
-
-networks:
-  kfu-network:
-    driver: bridge
 
 volumes:
   postgres_data:

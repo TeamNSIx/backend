@@ -17,15 +17,6 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
-COPY alembic.ini gunicorn.conf.py ./
-COPY migrations ./migrations
-COPY scripts ./scripts
-COPY src ./src
-
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
-
-
 FROM python:3.13-slim-bookworm AS runtime
 
 RUN apt-get update \
@@ -43,7 +34,11 @@ ENV PYTHONUNBUFFERED=1 \
     LOGGING__LOG_FILE=/tmp/app.log \
     GUNICORN_WORKERS=2
 
-COPY --from=builder --chown=app:app /app /app
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
+COPY --chown=app:app alembic.ini gunicorn.conf.py /app/
+COPY --chown=app:app migrations /app/migrations
+COPY --chown=app:app scripts /app/scripts
+COPY --chown=app:app src /app/src
 
 RUN chown -R app:app /app
 
@@ -52,6 +47,6 @@ USER app
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:8000/openapi.json > /dev/null || exit 1
+    CMD curl -fsS http://127.0.0.1:8000/openapi.json
 
 CMD ["gunicorn", "src.app.main:app", "-c", "gunicorn.conf.py"]
