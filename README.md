@@ -23,6 +23,89 @@ Production (gunicorn + uvicorn workers, слушает `0.0.0.0`):
 
 `uv run gunicorn src.app.main:app -c gunicorn.conf.py`
 
+## Docker
+
+Базовый образ: `python:3.13-slim-bookworm` (multi-stage, uv, non-root user `app`, healthcheck через `curl`).
+
+Сборка:
+
+```bash
+docker build -t kfu-chatbot-backend:0.1.0 .
+```
+
+Запуск (нужны переменные окружения; для БД в другом контейнере укажите `DB__HOST`, например `host.docker.internal` или имя сервиса в compose):
+
+```bash
+docker run --rm -p 8000:8000 --env-file .env kfu-chatbot-backend:0.1.0
+```
+
+Публикация в Docker Hub:
+
+```bash
+docker login
+docker tag kfu-chatbot-backend:0.1.0 lianamolokina/kfu-chatbot-backend:0.1.0
+docker tag kfu-chatbot-backend:0.1.0 lianamolokina/kfu-chatbot-backend:latest
+docker push lianamolokina/kfu-chatbot-backend:0.1.0
+docker push lianamolokina/kfu-chatbot-backend:latest
+```
+
+Образ: https://hub.docker.com/r/lianamolokina/kfu-chatbot-backend
+
+Миграции и bootstrap RBAC в контейнере (один раз):
+
+```bash
+docker run --rm --env-file .env kfu-chatbot-backend:0.1.0 alembic upgrade head
+docker run --rm --env-file .env kfu-chatbot-backend:0.1.0 python -m scripts.bootstrap_rbac
+```
+
+## Docker Compose (для фронтенда и локального стенда)
+
+Стек поднимается одной командой: PostgreSQL 18 (с pgvector), миграции, bootstrap RBAC, API и nginx reverse-proxy. **Снаружи открыт только порт 80** — БД и API доступны только внутри сети compose.
+
+### Быстрый старт
+
+1. Установите [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. Скопируйте переменные окружения:
+
+   `cp .env.example .env`
+
+3. При необходимости отредактируйте `.env` (пароль БД, `AUTH__SECRET`, CORS). Для compose в `.env` должны быть `DB__HOST=db`, `DB__USER`, `DB__PASSWORD`, `DB__NAME` — они же используются контейнером PostgreSQL без дублирования.
+4. Запустите проект:
+
+   `docker compose up`
+
+   Для фонового режима: `docker compose up -d`
+
+5. Проверка:
+   - Статическая страница: http://localhost/
+   - Swagger: http://localhost/docs
+   - ReDoc: http://localhost/redoc
+   - API: http://localhost/api/v1/ (например, `POST http://localhost/api/v1/auth/register`)
+   - Учётная запись администратора из `.env`: `RBAC__ADMIN_EMAIL` / `RBAC__ADMIN_PASSWORD`
+
+### Подключение фронтенда
+
+| Параметр | Значение |
+|----------|----------|
+| Base URL API | `http://localhost/api/v1` |
+| Пример регистрации | `POST http://localhost/api/v1/auth/register` |
+| Пример логина | `POST http://localhost/api/v1/auth/login` (form: `username`, `password`) |
+| CORS | origins из `CORS__ALLOW_ORIGINS` в `.env` (по умолчанию включён `http://localhost`) |
+
+Запросы с префиксом `/api` nginx проксирует на сервис `api` (gunicorn на `0.0.0.0:8000`). Пути `/docs`, `/openapi.json` и `/redoc` также проксируются на API (Swagger). Остальные пути отдают `deploy/nginx/html/index.html`.
+
+### Сервисы compose
+
+| Сервис | Образ (Docker Hub) | Назначение |
+|--------|-------------------|------------|
+| `db` | `pgvector/pgvector:pg18` (PostgreSQL 18 + pgvector) | База данных, том `postgres_data` |
+| `migrations` | `lianamolokina/kfu-chatbot-backend:0.1.0` | `alembic upgrade head` |
+| `rbac` | то же | `scripts.bootstrap_rbac` |
+| `api` | то же | Backend API |
+| `nginx` | `nginx:1.27-alpine` (`x-front-image`) | Reverse-proxy, порт **80** |
+
+Остановка: `docker compose down`. Удалить данные БД: `docker compose down -v`.
+
 После миграций выполните bootstrap RBAC (роли, permissions, admin):
 
 `uv run python -m scripts.bootstrap_rbac`
@@ -40,7 +123,7 @@ Production (gunicorn + uvicorn workers, слушает `0.0.0.0`):
 | `LOGGING__LEVEL` | `str` | Уровень логирования (`DEBUG`, `INFO`, `WARNING`, …) | `INFO` |
 | `LOGGING__LOG_FILE` | `str` | Путь к файлу логов приложения | `my_log.log` |
 | `DB__SCHEMA` | `str` | Драйвер БД для SQLAlchemy | `postgresql+asyncpg` |
-| `DB__HOST` | `str` | Хост PostgreSQL | `localhost` |
+| `DB__HOST` | `str` | Хост PostgreSQL (`db` в compose, `localhost` при локальном uv) | `localhost` |
 | `DB__USER` | `str` | Пользователь PostgreSQL | `YOUR_DB_USER` |
 | `DB__PASSWORD` | `str` | Пароль пользователя PostgreSQL | `YOUR_DB_PASSWORD` |
 | `DB__PORT` | `int` | Порт PostgreSQL | `5432` |

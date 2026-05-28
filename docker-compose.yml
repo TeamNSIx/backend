@@ -1,0 +1,81 @@
+# PostgreSQL 18 + pgvector (миграции требуют расширение vector)
+x-db-image: &db-image pgvector/pgvector:pg18
+
+x-back-image: &back-image lianamolokina/kfu-chatbot-backend:0.1.0
+
+x-front-image: &front-image nginx:1.27-alpine
+
+x-app-service: &app-service
+  image: *back-image
+  env_file:
+    - .env
+  environment: &app-environment
+    DB__HOST: db
+    DB__PORT: '5432'
+
+x-api-healthcheck: &api-healthcheck
+  test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:8000/openapi.json']
+  interval: 15s
+  timeout: 5s
+  retries: 5
+  start_period: 40s
+
+services:
+  db:
+    image: *db-image
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB__USER}
+      POSTGRES_PASSWORD: ${DB__PASSWORD}
+      POSTGRES_DB: ${DB__NAME}
+    volumes:
+      # PostgreSQL 18+: том монтируется в /var/lib/postgresql (см. docker-library/postgres)
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  migrations:
+    <<: *app-service
+    command: ['alembic', 'upgrade', 'head']
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  rbac:
+    <<: *app-service
+    command: ['python', '-m', 'scripts.bootstrap_rbac']
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: 'no'
+
+  api:
+    <<: *app-service
+    command: ['gunicorn', 'src.app.main:app', '-c', 'gunicorn.conf.py']
+    depends_on:
+      rbac:
+        condition: service_completed_successfully
+    healthcheck: *api-healthcheck
+    restart: unless-stopped
+
+  nginx:
+    image: *front-image
+    ports:
+      - '80:80'
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/html:/usr/share/nginx/html:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
