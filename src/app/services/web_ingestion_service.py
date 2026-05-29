@@ -99,15 +99,16 @@ class WebIngestionService:
     async def find_context(
         self,
         query_embedding: list[float],
+        urls: list[str] | None = None,
     ) -> WebContext | None:
         if not settings.web_ingestion.enabled:
             return None
 
         contexts: list[WebContext] = []
-        urls = settings.web_ingestion.fallback_urls_list[
+        candidate_urls = (urls or settings.web_ingestion.fallback_urls_list)[
             : settings.web_ingestion.max_pages_per_request
         ]
-        for url in urls:
+        for url in candidate_urls:
             if not self._is_trusted_url(url):
                 continue
             page = await self._fetch_page(url)

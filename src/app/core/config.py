@@ -64,7 +64,10 @@ class EmbeddingsSettings(BaseSettings):
 class WebIngestionSettings(BaseSettings):
     enabled: bool = True
     fallback_urls: str = ''
-    trusted_domains: str = 'kpfu.ru,itis.kpfu.ru'
+    kpfu_urls: str = ''
+    admissions_urls: str = ''
+    schedule_urls: str = ''
+    trusted_domains: str = 'kpfu.ru,itis.kpfu.ru,admissions.kpfu.ru'
     timeout_seconds: float = 10.0
     max_pages_per_request: int = 3
     chunk_size: int = 1200
@@ -75,11 +78,19 @@ class WebIngestionSettings(BaseSettings):
 
     @property
     def fallback_urls_list(self) -> list[str]:
-        return [
-            url.strip()
-            for url in self.fallback_urls.split(',')
-            if url.strip()
-        ]
+        return self._split_urls(self.fallback_urls)
+
+    @property
+    def kpfu_urls_list(self) -> list[str]:
+        return self._split_urls(self.kpfu_urls)
+
+    @property
+    def admissions_urls_list(self) -> list[str]:
+        return self._split_urls(self.admissions_urls)
+
+    @property
+    def schedule_urls_list(self) -> list[str]:
+        return self._split_urls(self.schedule_urls)
 
     @property
     def trusted_domains_list(self) -> list[str]:
@@ -87,6 +98,27 @@ class WebIngestionSettings(BaseSettings):
             domain.strip().lower()
             for domain in self.trusted_domains.split(',')
             if domain.strip()
+        ]
+
+    def urls_for_source_group(self, source_group: str | None) -> list[str]:
+        match source_group:
+            case 'admissions':
+                urls = self.admissions_urls_list
+            case 'kpfu':
+                urls = self.kpfu_urls_list
+            case 'schedule':
+                urls = self.schedule_urls_list
+            case 'none':
+                return []
+            case _:
+                urls = []
+        return urls or self.fallback_urls_list
+
+    def _split_urls(self, value: str) -> list[str]:
+        return [
+            url.strip()
+            for url in value.split(',')
+            if url.strip()
         ]
 
 

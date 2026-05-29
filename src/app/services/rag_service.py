@@ -20,15 +20,18 @@ NO_CONTEXT_ANSWER = (
     'К сожалению, я не нашел точной информации по вашему вопросу в базе знаний. '
     'Попробуйте переформулировать запрос или обратитесь к модератору.'
 )
+OUT_OF_SCOPE_ANSWER = (
+    'Я помогаю с вопросами об учебе, адаптации студентов и сервисах КФУ. '
+    'По этому вопросу я не ищу информацию.'
+)
 
 RAG_SYSTEM_PROMPT = """
 Ты помощник для адаптации студентов Казанского федерального университета.
 Отвечай на русском языке только на основе переданного контекста из базы знаний.
 Если в контексте нет точного ответа, честно скажи, что точной информации нет.
-Если студент использует бытовое название, а в контексте есть официальный термин
-для того же студенческого запроса, ответь с уточнением официального названия.
-Например: если спрашивают про деканат ИТИС, а в контексте есть директорат ИТИС,
-ответь, что в источнике указан директорат, и используй данные директората.
+Уточняй официальный термин только если вопрос про деканат, а в контексте
+для этого же подразделения указан директорат. В остальных случаях не объясняй
+обычные аббревиатуры вроде КФУ и ИТИС.
 Если точного ответа нет, не перечисляй типичные варианты и не делай предположений.
 Не придумывай адреса, контакты, сроки, правила и имена преподавателей.
 """.strip()
@@ -81,7 +84,7 @@ class RAGService:
         )
         return await self.embedding_repository.add(embedding)
 
-    async def generate_answer(
+    async def generate_answer(  # noqa: PLR0911
         self,
         question: str,
         background_tasks: BackgroundTasks | None = None,
@@ -115,11 +118,23 @@ class RAGService:
             }
 
         if not matches:
-            web_started = perf_counter()
-            web_context = await self.web_ingestion_service.find_context(
-                query_embedding,
+            scope_allowed, scope_metadata = await self._check_web_fallback_scope(
+                question,
+                timings_ms,
             )
-            timings_ms['web_fallback'] = self._elapsed_ms(web_started)
+            if not scope_allowed:
+                return self._build_scope_stopped_response(
+                    scope_metadata,
+                    timings_ms,
+                    rag_started,
+                )
+
+            web_context = await self._find_web_context(
+                query_embedding,
+                scope_metadata,
+                timings_ms,
+                'web_fallback',
+            )
             if web_context is not None:
                 answer, metadata = await self._generate_web_answer(
                     question,
@@ -127,6 +142,7 @@ class RAGService:
                     timings_ms,
                     rag_started,
                 )
+                metadata.update(scope_metadata)
                 if (
                     settings.web_ingestion.persist_found_context
                     and background_tasks is not None
@@ -146,6 +162,7 @@ class RAGService:
                 'embedding_model': settings.embeddings.model_name,
                 'used_fragments': [],
                 'timings_ms': timings_ms,
+                **scope_metadata,
             }
 
         prompt_matches = self._select_prompt_matches(matches)
@@ -157,12 +174,27 @@ class RAGService:
             system_prompt=RAG_SYSTEM_PROMPT,
         )
         timings_ms['llm_generation'] = self._elapsed_ms(llm_started)
+        web_scope_metadata: dict = {}
         if self._should_try_web_after_llm(answer, llm_metadata):
-            web_started = perf_counter()
-            web_context = await self.web_ingestion_service.find_context(
-                query_embedding,
+            scope_allowed, scope_metadata = await self._check_web_fallback_scope(
+                question,
+                timings_ms,
             )
-            timings_ms['web_fallback_after_local_llm'] = self._elapsed_ms(web_started)
+            web_scope_metadata = scope_metadata
+            if not scope_allowed:
+                return self._build_scope_stopped_response(
+                    scope_metadata,
+                    timings_ms,
+                    rag_started,
+                    local_matches=prompt_matches,
+                )
+
+            web_context = await self._find_web_context(
+                query_embedding,
+                scope_metadata,
+                timings_ms,
+                'web_fallback_after_local_llm',
+            )
             if web_context is not None:
                 answer, metadata = await self._generate_web_answer(
                     question,
@@ -171,6 +203,7 @@ class RAGService:
                     rag_started,
                     local_matches=prompt_matches,
                 )
+                metadata.update(scope_metadata)
                 self._schedule_web_context_persist(web_context, background_tasks)
                 return answer, metadata
 
@@ -193,6 +226,7 @@ class RAGService:
                 if filtered_fragments_count
                 else {}
             ),
+            **web_scope_metadata,
             **answer_guard_metadata,
         }
 
@@ -245,6 +279,71 @@ class RAGService:
             ],
             'timings_ms': timings_ms,
             **answer_guard_metadata,
+        }
+
+    async def _check_web_fallback_scope(
+        self,
+        question: str,
+        timings_ms: dict[str, int],
+    ) -> tuple[bool, dict]:
+        scope_started = perf_counter()
+        scope_metadata = await self.llm_service.classify_scope(question)
+        timings_ms['scope_classification'] = self._elapsed_ms(scope_started)
+        return bool(scope_metadata.get('scope_allowed')), scope_metadata
+
+    async def _find_web_context(
+        self,
+        query_embedding: list[float],
+        scope_metadata: dict,
+        timings_ms: dict[str, int],
+        timing_key: str,
+    ) -> WebContext | None:
+        source_group = str(scope_metadata.get('scope_source_group') or '')
+        urls = settings.web_ingestion.urls_for_source_group(source_group)
+        scope_metadata['web_source_group'] = source_group or 'default'
+        scope_metadata['web_candidate_urls'] = urls[
+            : settings.web_ingestion.max_pages_per_request
+        ]
+
+        web_started = perf_counter()
+        web_context = await self.web_ingestion_service.find_context(
+            query_embedding,
+            urls=urls,
+        )
+        timings_ms[timing_key] = self._elapsed_ms(web_started)
+        return web_context
+
+    def _build_scope_stopped_response(
+        self,
+        scope_metadata: dict,
+        timings_ms: dict[str, int],
+        rag_started: float,
+        local_matches: list[tuple[Embedding, float]] | None = None,
+    ) -> tuple[str, dict]:
+        timings_ms['total_rag'] = self._elapsed_ms(rag_started)
+        answer_type = (
+            'out_of_scope'
+            if scope_metadata.get('scope_available')
+            else 'scope_unavailable'
+        )
+        answer = (
+            OUT_OF_SCOPE_ANSWER
+            if answer_type == 'out_of_scope'
+            else NO_CONTEXT_ANSWER
+        )
+        return answer, {
+            'rag_enabled': True,
+            'rag_available': True,
+            'answer_type': answer_type,
+            'context_found': bool(local_matches),
+            'web_fallback_used': False,
+            'embedding_model': settings.embeddings.model_name,
+            'used_fragments': [
+                self._fragment_metadata(item, score)
+                for item, score in (local_matches or [])
+            ],
+            'timings_ms': timings_ms,
+            **scope_metadata,
         }
 
     def _schedule_web_context_persist(
@@ -389,8 +488,9 @@ class RAGService:
             f'Вопрос студента: {question}\n\n'
             f'Контекст из базы знаний:\n{context}\n\n'
             'Сформулируй ответ студенту. Если используешь факты, опирайся только '
-            'на контекст выше. Если вопрос задан бытовым названием, а в контексте '
-            'есть официальный термин для того же объекта, явно укажи это. '
+            'на контекст выше. Уточняй официальный термин только если вопрос '
+            'про деканат, а в контексте для этого же подразделения указан '
+            'директорат. Не объясняй обычные аббревиатуры вроде КФУ и ИТИС. '
             'Если точного ответа нет, не предполагай.'
         )
 
@@ -431,8 +531,9 @@ class RAGService:
             'Контекст из базы знаний и доверенных веб-источников КФУ:\n'
             f'{web_context}\n\n'
             'Сформулируй ответ студенту. Если используешь факты, опирайся только '
-            'на контекст выше. Если вопрос задан бытовым названием, а в контексте '
-            'есть официальный термин для того же объекта, явно укажи это. '
+            'на контекст выше. Уточняй официальный термин только если вопрос '
+            'про деканат, а в контексте для этого же подразделения указан '
+            'директорат. Не объясняй обычные аббревиатуры вроде КФУ и ИТИС. '
             'Если точного ответа нет, не предполагай.'
         )
 
