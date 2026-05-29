@@ -287,9 +287,10 @@ class RAGService:
         timings_ms: dict[str, int],
     ) -> tuple[bool, dict]:
         scope_started = perf_counter()
-        scope_metadata = await self.llm_service.classify_scope(question)
+        scope_result = await self.llm_service.classify_scope(question)
+        scope_metadata = scope_result.to_metadata()
         timings_ms['scope_classification'] = self._elapsed_ms(scope_started)
-        return bool(scope_metadata.get('scope_allowed')), scope_metadata
+        return scope_result.scope_allowed, scope_metadata
 
     async def _find_web_context(
         self,

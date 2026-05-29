@@ -2,15 +2,19 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Security, status
-from pydantic import BaseModel, Field, model_validator
 
 from src.app.core.responses import auth_responses, common_responses, merge_responses
 from src.app.dependencies import SourceFragmentServiceDep, SourceServiceDep
 from src.app.dependencies.auth import get_current_user
 from src.app.models.embedding import EmbeddingPublic
-from src.app.models.source import SourceCreate, SourceType
-from src.app.models.source_fragment import SourceFragmentCreate, SourceFragmentPublic
-from src.app.models.user import UserPublic
+from src.app.models.source import SourceCreate
+from src.app.models.source_fragment import SourceFragmentCreate
+from src.app.schemas.knowledge import (
+    KnowledgeFragmentCreate,
+    KnowledgeFragmentResponse,
+    KnowledgeUrlIngestCreate,
+    KnowledgeUrlIngestResponse,
+)
 from src.app.services.rag_service import RAGService
 from src.app.services.web_ingestion_service import WebIngestionService
 from src.utils.error import NotFoundError
@@ -18,55 +22,18 @@ from src.utils.error import NotFoundError
 router = APIRouter(prefix='/knowledge', tags=['knowledge'])
 
 _responses = merge_responses(common_responses, auth_responses)
-
-KnowledgeWriteAuth = Annotated[
-    UserPublic,
-    Security(get_current_user, scopes=['profile:create']),
-]
+knowledge_write_dependency = Security(get_current_user, scopes=['profile:create'])
 RAGServiceDep = Annotated[RAGService, Depends(RAGService)]
 WebIngestionServiceDep = Annotated[WebIngestionService, Depends(WebIngestionService)]
-
-
-class KnowledgeFragmentCreate(BaseModel):
-    content: str = Field(min_length=1)
-    source_id: UUID | None = None
-    source_url: str | None = None
-    source_title: str | None = None
-    source_type: SourceType = SourceType.DOCUMENT
-    chunk_index: int | None = None
-
-    @model_validator(mode='after')
-    def validate_source(self):
-        if self.source_id is None and self.source_url is None:
-            msg = 'source_id or source_url is required'
-            raise ValueError(msg)
-        return self
-
-
-class KnowledgeFragmentResponse(BaseModel):
-    fragment: SourceFragmentPublic
-    embedding: EmbeddingPublic
-
-
-class KnowledgeUrlIngestCreate(BaseModel):
-    url: str = Field(min_length=1)
-    title: str | None = None
-
-
-class KnowledgeUrlIngestResponse(BaseModel):
-    source_url: str
-    source_title: str
-    content_hash: str
-    chunks_indexed: int
 
 
 @router.post(
     '/fragments',
     status_code=status.HTTP_201_CREATED,
     responses=_responses,
+    dependencies=[knowledge_write_dependency],
 )
 async def create_fragment(
-    current_user: KnowledgeWriteAuth,  # noqa: ARG001
     payload: KnowledgeFragmentCreate,
     source_service: SourceServiceDep,
     fragment_service: SourceFragmentServiceDep,
@@ -101,9 +68,9 @@ async def create_fragment(
     '/sources/ingest-url',
     status_code=status.HTTP_201_CREATED,
     responses=_responses,
+    dependencies=[knowledge_write_dependency],
 )
 async def ingest_url(
-    current_user: KnowledgeWriteAuth,  # noqa: ARG001
     payload: KnowledgeUrlIngestCreate,
     web_ingestion_service: WebIngestionServiceDep,
 ) -> KnowledgeUrlIngestResponse:
@@ -119,9 +86,9 @@ async def ingest_url(
 @router.post(
     '/fragments/{fragment_id}/embedding',
     responses=_responses,
+    dependencies=[knowledge_write_dependency],
 )
 async def refresh_fragment_embedding(
-    current_user: KnowledgeWriteAuth,  # noqa: ARG001
     fragment_id: UUID,
     fragment_service: SourceFragmentServiceDep,
     rag_service: RAGServiceDep,

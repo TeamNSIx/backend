@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import math
-import re
 from dataclasses import dataclass
 from datetime import datetime
-from html.parser import HTMLParser
 from typing import Annotated
 from urllib.parse import urlparse
 
@@ -20,6 +18,10 @@ from src.app.models.source_fragment import SourceFragment
 from src.app.repositories.source_fragment_repository import SourceFragmentRepository
 from src.app.repositories.source_repository import SourceRepository
 from src.app.services.local_embedding_service import LocalEmbeddingService
+from src.app.services.web_text_extractor import (
+    extract_web_text,
+    split_text_into_chunks,
+)
 
 
 @dataclass
@@ -35,48 +37,6 @@ class WebContext:
     source_title: str
     content_hash: str
     chunks: list[WebChunk]
-
-
-class _TextExtractor(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self.parts: list[str] = []
-        self.title_parts: list[str] = []
-        self._skip_depth = 0
-        self._in_title = False
-
-    def handle_starttag(self, tag: str, _attrs) -> None:  # noqa: ANN001
-        if tag in {'script', 'style', 'noscript', 'svg'}:
-            self._skip_depth += 1
-        elif tag == 'title':
-            self._in_title = True
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in {'script', 'style', 'noscript', 'svg'} and self._skip_depth:
-            self._skip_depth -= 1
-        elif tag == 'title':
-            self._in_title = False
-        elif tag in {'p', 'div', 'li', 'section', 'article', 'br', 'h1', 'h2', 'h3'}:
-            self.parts.append('\n')
-
-    def handle_data(self, data: str) -> None:
-        if self._skip_depth:
-            return
-        text = data.strip()
-        if not text:
-            return
-        if self._in_title:
-            self.title_parts.append(text)
-        self.parts.append(text)
-
-    @property
-    def text(self) -> str:
-        return _normalize_text(' '.join(self.parts))
-
-    @property
-    def title(self) -> str | None:
-        title = _normalize_text(' '.join(self.title_parts))
-        return title or None
 
 
 class WebIngestionService:
@@ -212,11 +172,10 @@ class WebIngestionService:
         except httpx.HTTPError:
             return None
 
-        extractor = _TextExtractor()
-        extractor.feed(response.text)
-        if not extractor.text:
+        extracted = extract_web_text(response.text)
+        if extracted is None:
             return None
-        return extractor.title, extractor.text
+        return extracted.title, extracted.text
 
     async def _rank_chunks(
         self,
@@ -240,16 +199,11 @@ class WebIngestionService:
         return ranked[: settings.web_ingestion.max_context_chunks]
 
     def _split_text(self, text: str) -> list[str]:
-        chunk_size = settings.web_ingestion.chunk_size
-        overlap = min(settings.web_ingestion.chunk_overlap, chunk_size // 2)
-        chunks = []
-        start = 0
-        while start < len(text):
-            chunk = text[start : start + chunk_size].strip()
-            if chunk:
-                chunks.append(chunk)
-            start += chunk_size - overlap
-        return chunks
+        return split_text_into_chunks(
+            text,
+            chunk_size=settings.web_ingestion.chunk_size,
+            chunk_overlap=settings.web_ingestion.chunk_overlap,
+        )
 
     def _is_trusted_url(self, url: str) -> bool:
         host = urlparse(url).hostname
@@ -273,10 +227,6 @@ class WebIngestionService:
                 LocalEmbeddingService(),
             )
             await service.persist_context(context)
-
-
-def _normalize_text(text: str) -> str:
-    return re.sub(r'\s+', ' ', text).strip()
 
 
 def _cosine_similarity(left: list[float], right: list[float]) -> float:
