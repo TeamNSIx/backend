@@ -1,7 +1,15 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request, Security, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Query,
+    Request,
+    Security,
+    status,
+)
 from pydantic import BaseModel, Field
 
 from src.app.core.responses import (
@@ -148,11 +156,13 @@ async def create_message(
     conversation: ConversationUpdateAccessDep,
     payload: ChatMessageCreate,
     message_service: MessageServiceDep,
+    background_tasks: BackgroundTasks,
 ):
     _ = conversation_id
     user_message, bot_message = await message_service.create_chat_pair(
         conversation_id=conversation.id,
         user_text=payload.content,
+        background_tasks=background_tasks,
     )
     return ChatMessageResponse(
         user_message=user_message,

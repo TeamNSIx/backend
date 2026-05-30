@@ -46,6 +46,80 @@ class GigaChatSettings(BaseSettings):
     verify_ssl: bool = True
     temperature: float = 0.2
     max_tokens: int = 700
+    rag_top_k: int = 5
+    rag_min_similarity: float = 0.35
+
+
+class EmbeddingsSettings(BaseSettings):
+    provider: str = 'local'
+    model_name: str = 'intfloat/multilingual-e5-small'
+    dimension: int = 384
+    document_prefix: str = 'passage: '
+    query_prefix: str = 'query: '
+    query_instruction: str = ''
+    max_seq_length: int = 512
+    trust_remote_code: bool = False
+
+
+class WebIngestionSettings(BaseSettings):
+    enabled: bool = True
+    fallback_urls: str = ''
+    kpfu_urls: str = ''
+    admissions_urls: str = ''
+    schedule_urls: str = ''
+    trusted_domains: str = 'kpfu.ru,itis.kpfu.ru,admissions.kpfu.ru'
+    timeout_seconds: float = 10.0
+    max_pages_per_request: int = 3
+    chunk_size: int = 1200
+    chunk_overlap: int = 200
+    min_similarity: float = 0.55
+    max_context_chunks: int = 3
+    persist_found_context: bool = True
+
+    @property
+    def fallback_urls_list(self) -> list[str]:
+        return self._split_urls(self.fallback_urls)
+
+    @property
+    def kpfu_urls_list(self) -> list[str]:
+        return self._split_urls(self.kpfu_urls)
+
+    @property
+    def admissions_urls_list(self) -> list[str]:
+        return self._split_urls(self.admissions_urls)
+
+    @property
+    def schedule_urls_list(self) -> list[str]:
+        return self._split_urls(self.schedule_urls)
+
+    @property
+    def trusted_domains_list(self) -> list[str]:
+        return [
+            domain.strip().lower()
+            for domain in self.trusted_domains.split(',')
+            if domain.strip()
+        ]
+
+    def urls_for_source_group(self, source_group: str | None) -> list[str]:
+        match source_group:
+            case 'admissions':
+                urls = self.admissions_urls_list
+            case 'kpfu':
+                urls = self.kpfu_urls_list
+            case 'schedule':
+                urls = self.schedule_urls_list
+            case 'none':
+                return []
+            case _:
+                urls = []
+        return urls or self.fallback_urls_list
+
+    def _split_urls(self, value: str) -> list[str]:
+        return [
+            url.strip()
+            for url in value.split(',')
+            if url.strip()
+        ]
 
 
 class LoggingSettings(BaseSettings):
@@ -127,6 +201,8 @@ class Settings(BaseSettings):
     rbac: RBACSettings = RBACSettings()
     llm: LLMSettings = LLMSettings()
     gigachat: GigaChatSettings = GigaChatSettings()
+    embeddings: EmbeddingsSettings = EmbeddingsSettings()
+    web_ingestion: WebIngestionSettings = WebIngestionSettings()
 
     model_config = SettingsConfigDict(
         env_file='.env',
